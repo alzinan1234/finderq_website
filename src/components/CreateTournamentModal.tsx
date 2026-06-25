@@ -195,14 +195,14 @@ export function CreateTournamentModal({ onClose, onCreateTournament, organizerNa
     parseFloat(prizeDistribution.third || '0');
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center z-[9999] p-0 sm:p-4">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-3 sm:p-4">
       {/* Main Modal */}
-      <div className="bg-gradient-to-br from-[#1a1d29] to-[#151821] rounded-t-2xl sm:rounded-2xl w-full max-w-3xl flex flex-col border border-[#00d4ff]/20 shadow-2xl shadow-[#00d4ff]/10"
-        style={{ maxHeight: '95dvh' }}>
+      <div className="bg-gradient-to-br from-[#1a1d29] to-[#151821] rounded-2xl w-full max-w-3xl flex flex-col border border-[#00d4ff]/20 shadow-2xl shadow-[#00d4ff]/10"
+        style={{ maxHeight: '90dvh' }}>
 
         {/* Header */}
         <div className="relative p-3 sm:p-4 border-b border-white/5 flex-shrink-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/5 to-purple-500/5 rounded-t-2xl sm:rounded-t-2xl"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/5 to-purple-500/5 rounded-t-2xl"></div>
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="p-1.5 sm:p-2 bg-gradient-to-br from-[#00d4ff] to-[#00a3cc] rounded-xl shadow-lg shadow-[#00d4ff]/20">
@@ -580,9 +580,9 @@ export function CreateTournamentModal({ onClose, onCreateTournament, organizerNa
 
       {/* Payment Modal */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-end sm:items-center justify-center z-[10000] p-0 sm:p-4">
-          <div className="bg-gradient-to-br from-[#1a1d29] to-[#151821] rounded-t-2xl sm:rounded-2xl w-full max-w-2xl flex flex-col border border-green-500/20 shadow-2xl shadow-green-500/10"
-            style={{ maxHeight: '92dvh' }}>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[10000] p-3 sm:p-4">
+          <div className="bg-gradient-to-br from-[#1a1d29] to-[#151821] rounded-2xl w-full max-w-2xl flex flex-col border border-green-500/20 shadow-2xl shadow-green-500/10"
+            style={{ maxHeight: '88dvh' }}>
 
             {/* Header */}
             <div className="relative p-4 sm:p-6 border-b border-white/5 bg-gradient-to-r from-green-500/10 to-emerald-500/10 flex-shrink-0">

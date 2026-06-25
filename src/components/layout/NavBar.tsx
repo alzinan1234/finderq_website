@@ -11,11 +11,11 @@ import { useAppStore } from '@/store/appStore'
 import { useTranslation } from '@/hooks/useTranslation'
 
 const REGIONS = [
-  { label: 'EUW',     href: '/euw' },
-  { label: 'EUNE',    href: '/eune' },
-  { label: 'NA',      href: '/na' },
-  { label: 'KR',      href: '/kr' },
-  { label: 'BR',      href: '/br' },
+  { label: 'EUW',  href: '/euw' },
+  { label: 'EUNE', href: '/eune' },
+  { label: 'NA',   href: '/na' },
+  { label: 'KR',   href: '/kr' },
+  { label: 'BR',   href: '/br' },
 ]
 const REGIONS_MORE = [
   { label: 'LAN + LAS', href: '/lan-las' },
@@ -46,47 +46,43 @@ export function NavBar() {
   const unreadCount = notifications.filter(n => !n.read).length
   const isProfileDropdownOpen = (store as any).isProfileDropdownOpen
 
-  // ---- Mobile menu state ----
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // ---- GSAP refs ----
-  const navRef = useRef(null)
-  const mobileMenuRef = useRef(null)
+  const navRef          = useRef(null)
+  const mobileMenuRef   = useRef(null)
   const hamburgerBtnRef = useRef(null)
-  const line1Ref = useRef(null)
-  const line2Ref = useRef(null)
-  const line3Ref = useRef(null)
+  const line1Ref        = useRef(null)
+  const line2Ref        = useRef(null)
+  const line3Ref        = useRef(null)
 
-  // Navbar entrance animation
+  // Navbar entrance
   useEffect(() => {
     if (navRef.current) {
-      gsap.fromTo(
-        navRef.current,
+      gsap.fromTo(navRef.current,
         { y: -40, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }
       )
     }
   }, [])
 
-  // Hamburger icon morph animation
+  // Hamburger morph
   useEffect(() => {
     if (!line1Ref.current || !line2Ref.current || !line3Ref.current) return
     if (isMobileMenuOpen) {
-      gsap.to(line1Ref.current, { rotate: 45, y: 6, duration: 0.3, ease: 'power2.inOut' })
-      gsap.to(line2Ref.current, { opacity: 0, duration: 0.2 })
+      gsap.to(line1Ref.current, { rotate: 45,  y: 6,  duration: 0.3, ease: 'power2.inOut' })
+      gsap.to(line2Ref.current, { opacity: 0,         duration: 0.2 })
       gsap.to(line3Ref.current, { rotate: -45, y: -6, duration: 0.3, ease: 'power2.inOut' })
     } else {
       gsap.to(line1Ref.current, { rotate: 0, y: 0, duration: 0.3, ease: 'power2.inOut' })
-      gsap.to(line2Ref.current, { opacity: 1, duration: 0.2, delay: 0.1 })
+      gsap.to(line2Ref.current, { opacity: 1,         duration: 0.2, delay: 0.1 })
       gsap.to(line3Ref.current, { rotate: 0, y: 0, duration: 0.3, ease: 'power2.inOut' })
     }
   }, [isMobileMenuOpen])
 
-  // Mobile drawer open animation (runs after it mounts)
+  // Drawer open animation
   useEffect(() => {
     if (isMobileMenuOpen && mobileMenuRef.current) {
-      gsap.fromTo(
-        mobileMenuRef.current,
+      gsap.fromTo(mobileMenuRef.current,
         { height: 0, opacity: 0 },
         { height: 'auto', opacity: 1, duration: 0.4, ease: 'power3.out' }
       )
@@ -94,46 +90,35 @@ export function NavBar() {
   }, [isMobileMenuOpen])
 
   const openMobileMenu = () => setIsMobileMenuOpen(true)
-
   const closeMobileMenu = () => {
     if (mobileMenuRef.current) {
       gsap.to(mobileMenuRef.current, {
-        height: 0,
-        opacity: 0,
-        duration: 0.3,
-        ease: 'power2.in',
+        height: 0, opacity: 0, duration: 0.3, ease: 'power2.in',
         onComplete: () => setIsMobileMenuOpen(false),
       })
     } else {
       setIsMobileMenuOpen(false)
     }
   }
+  const toggleMobileMenu = () => isMobileMenuOpen ? closeMobileMenu() : openMobileMenu()
 
-  const toggleMobileMenu = () => (isMobileMenuOpen ? closeMobileMenu() : openMobileMenu())
-
-  // Auto-close mobile menu when resizing up to desktop
+  // Auto-close on resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768 && isMobileMenuOpen) {
-        closeMobileMenu()
-      }
+      if (window.innerWidth >= 768 && isMobileMenuOpen) closeMobileMenu()
     }
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [isMobileMenuOpen])
 
-  // Close mobile menu on outside click
+  // Outside click
   useEffect(() => {
     function handleClickOutside(e) {
       if (
         isMobileMenuOpen &&
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(e.target) &&
-        hamburgerBtnRef.current &&
-        !hamburgerBtnRef.current.contains(e.target)
-      ) {
-        closeMobileMenu()
-      }
+        mobileMenuRef.current && !mobileMenuRef.current.contains(e.target) &&
+        hamburgerBtnRef.current && !hamburgerBtnRef.current.contains(e.target)
+      ) closeMobileMenu()
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -146,8 +131,10 @@ export function NavBar() {
       className="fixed top-0 left-0 right-0 flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 py-1 sm:py-2 z-50"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
+      {/* ───── Left: Logo + Region ───── */}
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4">
+
+        {/* Logo */}
         <Link href="/about">
           <motion.div
             className="group relative flex items-center gap-2 cursor-pointer"
@@ -158,7 +145,8 @@ export function NavBar() {
               <img
                 src="/assets/999999-Photoroom.png"
                 alt="FinderQ Logo"
-                className="h-20 sm:h-28 md:h-36 lg:h-44 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                /* Smaller on mobile so it doesn't dominate */
+                className="h-16 sm:h-24 md:h-36 lg:h-44 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </div>
             <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00d4ff] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -168,18 +156,16 @@ export function NavBar() {
         {/* Region Dropdown */}
         <div className="relative">
           <button
-            className="group relative flex items-center gap-1 pl-0.5 pr-1.5 py-0.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 overflow-visible"
+            className="group relative flex items-center gap-0.5 pl-0.5 pr-1.5 py-0.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 overflow-visible"
             onClick={() => set({ isRegionDropdownOpen: !isRegionDropdownOpen })}
           >
-            <div className="relative flex items-center gap-0">
-              <img
-                src="/assets/2xko-teemo-removebg-preview.png"
-                alt="Region"
-                className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain -my-2 sm:-my-4 md:-my-5 lg:-my-7 -mr-1 sm:-mr-1.5 lg:-mr-2"
-              />
-              <span className="text-white font-bold text-sm sm:text-base md:text-lg">{currentRegionLabel}</span>
-              <ChevronDown className={`w-4 h-4 text-[#00d4ff] transition-transform duration-300 ${isRegionDropdownOpen ? 'rotate-180' : ''}`} />
-            </div>
+            <img
+              src="/assets/2xko-teemo-removebg-preview.png"
+              alt="Region"
+              className="w-7 h-7 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain -my-1 sm:-my-4 md:-my-5 lg:-my-7 -mr-0.5 sm:-mr-1 lg:-mr-2"
+            />
+            <span className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg">{currentRegionLabel}</span>
+            <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-[#00d4ff] transition-transform duration-300 ${isRegionDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
           <AnimatePresence>
@@ -189,20 +175,19 @@ export function NavBar() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full left-0 mt-2 bg-gradient-to-b from-[#1a1d29]/95 to-[#0a0e27]/95 backdrop-blur-xl rounded-xl shadow-2xl py-3 min-w-[160px] sm:min-w-[180px] max-w-[85vw] border border-[#00d4ff]/20 overflow-hidden"
+                className="absolute top-full left-0 mt-2 bg-gradient-to-b from-[#1a1d29]/95 to-[#0a0e27]/95 backdrop-blur-xl rounded-xl shadow-2xl py-3 min-w-[140px] sm:min-w-[160px] max-w-[80vw] border border-[#00d4ff]/20 overflow-hidden"
               >
                 <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/10 via-transparent to-[#c89b3c]/10 pointer-events-none" />
                 <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d4ff]/50 to-transparent" />
 
                 {REGIONS.map(r => (
                   <Link
-                    key={r.href}
-                    href={r.href}
+                    key={r.href} href={r.href}
                     onClick={() => set({ isRegionDropdownOpen: false })}
-                    className="relative block w-full px-4 py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
+                    className="relative block w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/20 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-200" />
-                    <span className="relative font-semibold text-base">{r.label}</span>
+                    <span className="relative font-semibold text-sm sm:text-base">{r.label}</span>
                   </Link>
                 ))}
 
@@ -210,13 +195,12 @@ export function NavBar() {
 
                 {REGIONS_MORE.map(r => (
                   <Link
-                    key={r.href}
-                    href={r.href}
+                    key={r.href} href={r.href}
                     onClick={() => set({ isRegionDropdownOpen: false })}
-                    className="relative block w-full px-4 py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
+                    className="relative block w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/20 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-200" />
-                    <span className="relative font-semibold text-base">{r.label}</span>
+                    <span className="relative font-semibold text-sm sm:text-base">{r.label}</span>
                   </Link>
                 ))}
 
@@ -227,24 +211,24 @@ export function NavBar() {
         </div>
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
+      {/* ───── Right: actions ───── */}
+      <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3">
 
-        {/* Hamburger toggle (mobile / tablet only) */}
+        {/* Hamburger — mobile/tablet only */}
         <button
           ref={hamburgerBtnRef}
           onClick={toggleMobileMenu}
           aria-label="Toggle menu"
-          className="md:hidden relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 hover:border-[#00d4ff]/40 flex items-center justify-center transition-all duration-300"
+          className="md:hidden relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 hover:border-[#00d4ff]/40 flex items-center justify-center transition-all duration-300"
         >
-          <div className="flex flex-col items-center justify-center gap-1.5 w-5">
+          <div className="flex flex-col items-center justify-center gap-[5px] w-5">
             <span ref={line1Ref} className="block h-0.5 w-5 bg-[#00d4ff] rounded-full origin-center" />
             <span ref={line2Ref} className="block h-0.5 w-5 bg-[#00d4ff] rounded-full origin-center" />
             <span ref={line3Ref} className="block h-0.5 w-5 bg-[#00d4ff] rounded-full origin-center" />
           </div>
         </button>
 
-        {/* Tournaments */}
+        {/* Tournaments — desktop only */}
         <Link
           href="/tournaments"
           className="hidden md:flex items-center gap-0 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 cursor-pointer overflow-visible"
@@ -257,7 +241,7 @@ export function NavBar() {
           <span className="text-white font-semibold text-sm">{t('tournaments')}</span>
         </Link>
 
-        {/* Media */}
+        {/* Media — desktop only */}
         <Link
           href="/media"
           className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#c89b3c]/40 cursor-pointer overflow-visible"
@@ -270,7 +254,7 @@ export function NavBar() {
           <span className="text-white font-semibold text-sm">Media</span>
         </Link>
 
-        {/* Challenges */}
+        {/* Challenges — desktop only */}
         <Link
           href="/challenges"
           className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-yellow-500/40 cursor-pointer"
@@ -283,12 +267,12 @@ export function NavBar() {
         {isLoggedIn && (
           <button
             onClick={() => set({ isNotificationPanelOpen: true })}
-            className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 hover:border-[#c89b3c]/40 flex items-center justify-center transition-all duration-300"
+            className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 border border-white/10 hover:border-[#c89b3c]/40 flex items-center justify-center transition-all duration-300"
           >
-            <Bell className="w-5 h-5 text-[#c89b3c]" />
+            <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-[#c89b3c]" />
             {unreadCount > 0 && (
-              <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center border-2 border-[#0a0e27] animate-pulse">
-                <span className="text-white text-xs font-bold">{unreadCount}</span>
+              <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center border-2 border-[#0a0e27] animate-pulse">
+                <span className="text-white text-[10px] sm:text-xs font-bold">{unreadCount}</span>
               </div>
             )}
           </button>
@@ -297,13 +281,13 @@ export function NavBar() {
         {/* Sign Up (guest) */}
         {!isLoggedIn && (
           <button
-            className="flex items-center gap-0 px-2 sm:px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 text-white font-semibold text-xs sm:text-sm overflow-visible"
+            className="flex items-center gap-0 px-1.5 sm:px-2 md:px-3 py-1 sm:py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 text-white font-semibold text-xs sm:text-sm overflow-visible"
             onClick={() => set({ isSignUpOpen: true })}
           >
             <img
               src="/assets/2xko-official-teemo-the-swift-scout-dev-update-gameplay-over_z3fk.1200-removebg-preview.png"
               alt="Sign Up"
-              className="w-16 h-16 sm:w-20 sm:h-20 md:w-[5.625rem] md:h-[5.625rem] object-contain -my-4 sm:-my-6 md:-my-9 -mr-2 sm:-mr-3 md:-mr-5 -ml-2 sm:-ml-3 md:-ml-5"
+              className="w-10 h-10 sm:w-16 sm:h-16 md:w-[5rem] md:h-[5rem] object-contain -my-3 sm:-my-5 md:-my-8 -mr-1 sm:-mr-2 md:-mr-4 -ml-1 sm:-ml-2 md:-ml-4"
             />
             {t('signUp')}
           </button>
@@ -316,19 +300,19 @@ export function NavBar() {
               if (isLoggedIn) set({ isProfileDropdownOpen: !isProfileDropdownOpen } as any)
               else set({ isLoginOpen: true })
             }}
-            className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all duration-300 flex items-center justify-center overflow-hidden border border-white/10 hover:border-[#00d4ff]/40"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/5 backdrop-blur-md hover:bg-white/10 transition-all duration-300 flex items-center justify-center overflow-hidden border border-white/10 hover:border-[#00d4ff]/40"
           >
             {isLoggedIn && userName
               ? userAvatar
                 ? <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
-                : <span className="text-white font-bold text-sm">{userName.slice(0, 2).toUpperCase()}</span>
-              : <User className="w-5 h-5 text-white" />
+                : <span className="text-white font-bold text-xs sm:text-sm">{userName.slice(0, 2).toUpperCase()}</span>
+              : <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             }
           </button>
 
           {/* Online status dot */}
           {isLoggedIn && (
-            <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#0a0e27] ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`} />
+            <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full border-2 border-[#0a0e27] ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`} />
           )}
 
           {/* Profile Dropdown */}
@@ -339,16 +323,17 @@ export function NavBar() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.15 }}
-                className="absolute right-0 top-12 w-[85vw] max-w-xs sm:w-64 bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden z-50"
+                /* Full-width on tiny phones, capped at xs on larger */
+                className="absolute right-0 top-11 sm:top-12 w-[calc(100vw-2rem)] max-w-[18rem] sm:w-64 bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-xl border border-white/10 shadow-2xl shadow-black/50 overflow-hidden z-50"
               >
                 {/* Header */}
-                <div className="p-4 border-b border-white/10 bg-gradient-to-br from-[#00d4ff]/10 to-transparent">
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border-2 border-[#00d4ff]/30">
+                <div className="p-3 sm:p-4 border-b border-white/10 bg-gradient-to-br from-[#00d4ff]/10 to-transparent">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="relative flex-shrink-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border-2 border-[#00d4ff]/30">
                         {userAvatar
                           ? <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
-                          : <span className="text-white font-bold">{userName?.slice(0, 2).toUpperCase()}</span>
+                          : <span className="text-white font-bold text-sm sm:text-base">{userName?.slice(0, 2).toUpperCase()}</span>
                         }
                       </div>
                       <button
@@ -360,84 +345,100 @@ export function NavBar() {
                           const msgs = { online: 'You are now Online', busy: 'Status set to Busy', offline: 'You appear Offline' }
                           toast.success(`Status: ${next}`, { description: msgs[next], duration: 2000 })
                         }}
-                        className={`absolute bottom-0 right-0 w-4 h-4 rounded-full border-2 border-[#1a1d29] cursor-pointer hover:scale-110 transition-transform ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`}
+                        className={`absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full border-2 border-[#1a1d29] cursor-pointer hover:scale-110 transition-transform ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`}
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`font-bold text-lg bg-gradient-to-r ${userNameColor} bg-clip-text text-transparent truncate`}>{userName}</p>
+                      <p className={`font-bold text-base sm:text-lg bg-gradient-to-r ${userNameColor} bg-clip-text text-transparent truncate`}>{userName}</p>
                       <p className="text-white/50 text-xs truncate">{userEmail}</p>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className={`w-2 h-2 rounded-full ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`} />
+                      <div className="flex items-center gap-1.5 mt-0.5 sm:mt-1">
+                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${userStatus === 'online' ? 'bg-yellow-400' : userStatus === 'busy' ? 'bg-red-500' : 'bg-white'}`} />
                         <span className="text-white/40 text-xs capitalize">{userStatus}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="py-2">
+                <div className="py-1 sm:py-2">
                   <button
                     onClick={() => { set({ isProfileOpen: true, isProfileDropdownOpen: false } as any) }}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-white/5 transition-colors text-left group"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-white/5 transition-colors text-left group"
                   >
-                    <User className="w-4 h-4 text-white/60 group-hover:text-[#00d4ff] transition-colors" />
+                    <User className="w-4 h-4 text-white/60 group-hover:text-[#00d4ff] transition-colors flex-shrink-0" />
                     <span className="text-white/80 group-hover:text-white text-sm">{t('viewProfile')}</span>
                   </button>
 
                   <button
                     onClick={() => { set({ isPremiumOpen: true, isProfileDropdownOpen: false } as any) }}
-                    className="w-full px-4 py-0 flex items-center gap-3 hover:bg-gradient-to-r hover:from-[#c89b3c]/10 hover:to-[#00d4ff]/10 transition-all text-left group"
+                    className="w-full px-3 sm:px-4 py-0 flex items-center gap-2 sm:gap-3 hover:bg-gradient-to-r hover:from-[#c89b3c]/10 hover:to-[#00d4ff]/10 transition-all text-left group"
                   >
-                    <img src="/assets/ChatGPT_Image_Jun_10__2026__09_38_34_AM-removebg-preview-1.png" alt="Premium" style={{ width: 52, height: 52, flexShrink: 0, marginBottom: -10, marginLeft: -20 }} className="object-contain" />
-                    <div className="flex items-center gap-2 flex-1" style={{ marginLeft: -15 }}>
-                      <span className="text-transparent bg-gradient-to-r from-[#c89b3c] to-[#00d4ff] bg-clip-text group-hover:from-[#00d4ff] group-hover:to-[#c89b3c] text-sm font-semibold">FinderQ Premium</span>
-                      {hasPremium && <span className="px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[10px] font-bold rounded-full">ACTIVE</span>}
+                    <img
+                      src="/assets/ChatGPT_Image_Jun_10__2026__09_38_34_AM-removebg-preview-1.png"
+                      alt="Premium"
+                      style={{ width: 44, height: 44, flexShrink: 0, marginBottom: -8, marginLeft: -16 }}
+                      className="object-contain"
+                    />
+                    <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0" style={{ marginLeft: -12 }}>
+                      <span className="text-transparent bg-gradient-to-r from-[#c89b3c] to-[#00d4ff] bg-clip-text group-hover:from-[#00d4ff] group-hover:to-[#c89b3c] text-xs sm:text-sm font-semibold truncate">FinderQ Premium</span>
+                      {hasPremium && <span className="flex-shrink-0 px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-[9px] sm:text-[10px] font-bold rounded-full">ACTIVE</span>}
                     </div>
                   </button>
 
-                  <div className="my-2 border-t border-white/10" />
+                  <div className="my-1 sm:my-2 border-t border-white/10" />
 
                   <button
                     onClick={() => { set({ isWalletOpen: true, isProfileDropdownOpen: false } as any) }}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gradient-to-r hover:from-green-500/10 hover:to-emerald-500/10 transition-all text-left group"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-gradient-to-r hover:from-green-500/10 hover:to-emerald-500/10 transition-all text-left group"
                   >
-                    <img src="/assets/ChatGPT_Image_Jun_10__2026__11_30_49_AM-removebg-preview.png" alt="Wallet" style={{ width: 52, height: 52, flexShrink: 0 }} className="object-contain" />
-                    <span className="text-green-400 group-hover:text-green-300 text-sm font-semibold" style={{ marginLeft: -39, marginTop: -8 }}>{t('wallet')}</span>
+                    <img
+                      src="/assets/ChatGPT_Image_Jun_10__2026__11_30_49_AM-removebg-preview.png"
+                      alt="Wallet"
+                      style={{ width: 44, height: 44, flexShrink: 0 }}
+                      className="object-contain"
+                    />
+                    <span className="text-green-400 group-hover:text-green-300 text-xs sm:text-sm font-semibold" style={{ marginLeft: -32, marginTop: -6 }}>{t('wallet')}</span>
                   </button>
 
                   {isOwner && (
                     <>
-                      <div className="my-2 border-t border-white/10" />
-                      <button onClick={() => { set({ isOwnerPanelOpen: true, isProfileDropdownOpen: false } as any) }}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gradient-to-r hover:from-yellow-500/10 hover:to-orange-500/10 transition-all text-left">
-                        <Crown className="w-4 h-4 text-yellow-400" />
-                        <span className="text-yellow-400 text-sm font-semibold">{t('ownerPanel')}</span>
+                      <div className="my-1 sm:my-2 border-t border-white/10" />
+                      <button
+                        onClick={() => { set({ isOwnerPanelOpen: true, isProfileDropdownOpen: false } as any) }}
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-gradient-to-r hover:from-yellow-500/10 hover:to-orange-500/10 transition-all text-left"
+                      >
+                        <Crown className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+                        <span className="text-yellow-400 text-xs sm:text-sm font-semibold">{t('ownerPanel')}</span>
                       </button>
                     </>
                   )}
 
                   {isAdmin && !isOwner && (
                     <>
-                      <div className="my-2 border-t border-white/10" />
-                      <button onClick={() => { set({ isAdminPanelOpen: true, isProfileDropdownOpen: false } as any) }}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gradient-to-r hover:from-[#c89b3c]/10 hover:to-[#a67c2f]/10 transition-all text-left">
-                        <Shield className="w-4 h-4 text-[#c89b3c]" />
-                        <span className="text-[#c89b3c] text-sm font-semibold">{t('adminPanel')}</span>
+                      <div className="my-1 sm:my-2 border-t border-white/10" />
+                      <button
+                        onClick={() => { set({ isAdminPanelOpen: true, isProfileDropdownOpen: false } as any) }}
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-gradient-to-r hover:from-[#c89b3c]/10 hover:to-[#a67c2f]/10 transition-all text-left"
+                      >
+                        <Shield className="w-4 h-4 text-[#c89b3c] flex-shrink-0" />
+                        <span className="text-[#c89b3c] text-xs sm:text-sm font-semibold">{t('adminPanel')}</span>
                       </button>
                     </>
                   )}
 
                   {isModerator && !isAdmin && !isOwner && (
                     <>
-                      <div className="my-2 border-t border-white/10" />
-                      <button onClick={() => { set({ isOwnerPanelOpen: true, isProfileDropdownOpen: false } as any) }}
-                        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-blue-500/10 transition-all text-left">
-                        <Shield className="w-4 h-4 text-blue-400" />
-                        <span className="text-blue-400 text-sm font-semibold">Moderator Panel</span>
+                      <div className="my-1 sm:my-2 border-t border-white/10" />
+                      <button
+                        onClick={() => { set({ isOwnerPanelOpen: true, isProfileDropdownOpen: false } as any) }}
+                        className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-blue-500/10 transition-all text-left"
+                      >
+                        <Shield className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                        <span className="text-blue-400 text-xs sm:text-sm font-semibold">Moderator Panel</span>
                       </button>
                     </>
                   )}
 
-                  <div className="my-2 border-t border-white/10" />
+                  <div className="my-1 sm:my-2 border-t border-white/10" />
                   <button
                     onClick={() => {
                       const name = userName
@@ -446,10 +447,10 @@ export function NavBar() {
                       router.push('/about')
                       toast.success('Logged out!', { description: `See you soon, ${name}! 👋`, duration: 3000 })
                     }}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-red-500/10 transition-colors text-left group"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-red-500/10 transition-colors text-left group"
                   >
-                    <LogOut className="w-4 h-4 text-white/60 group-hover:text-red-400 transition-colors" />
-                    <span className="text-white/80 group-hover:text-red-400 text-sm">{t('logout')}</span>
+                    <LogOut className="w-4 h-4 text-white/60 group-hover:text-red-400 transition-colors flex-shrink-0" />
+                    <span className="text-white/80 group-hover:text-red-400 text-xs sm:text-sm">{t('logout')}</span>
                   </button>
                 </div>
               </motion.div>
@@ -458,50 +459,75 @@ export function NavBar() {
         </div>
       </div>
 
-      {/* Mobile / tablet nav-links drawer */}
+      {/* ───── Mobile/tablet drawer ───── */}
       {isMobileMenuOpen && (
         <div
           ref={mobileMenuRef}
-          className="md:hidden absolute top-full inset-x-0 mx-2 mt-2 bg-gradient-to-b from-[#1a1d29]/95 to-[#0a0e27]/95 backdrop-blur-xl rounded-xl shadow-2xl border border-[#00d4ff]/20 overflow-hidden"
+          className="md:hidden absolute top-full inset-x-0 mx-2 mt-1.5 bg-gradient-to-b from-[#1a1d29]/98 to-[#0a0e27]/98 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#00d4ff]/20 overflow-hidden"
           style={{ height: 0, opacity: 0 }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/10 via-transparent to-[#c89b3c]/10 pointer-events-none" />
-          <div className="relative flex flex-col py-2 px-2 gap-1">
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d4ff]/40 to-transparent" />
+
+          <div className="relative flex flex-col py-2 px-2 gap-0.5">
+            {/* Tournaments */}
             <Link
               href="/tournaments"
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-all duration-200"
+              className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/15 transition-all duration-200"
             >
-              <img
-                src="/assets/bad3e7b50eef2663c37644cbb4e2dd7f01819802-3840x2160-removebg-preview.png"
-                alt="Tournaments"
-                className="w-9 h-9 object-contain"
-              />
-              <span className="text-white font-semibold text-sm">{t('tournaments')}</span>
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#00d4ff]/10 border border-[#00d4ff]/20 flex-shrink-0">
+                <img
+                  src="/assets/bad3e7b50eef2663c37644cbb4e2dd7f01819802-3840x2160-removebg-preview.png"
+                  alt="Tournaments"
+                  className="w-7 h-7 object-contain"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm group-hover:text-[#00d4ff] transition-colors">{t('tournaments')}</p>
+                <p className="text-white/40 text-xs">Compete & win prizes</p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-[#00d4ff] transition-colors flex-shrink-0" />
             </Link>
 
+            {/* Media */}
             <Link
               href="/media"
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-all duration-200"
+              className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/15 transition-all duration-200"
             >
-              <img
-                src="/assets/Teemo_cs.png"
-                alt="Media"
-                className="w-8 h-8 object-contain"
-              />
-              <span className="text-white font-semibold text-sm">Media</span>
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-[#c89b3c]/10 border border-[#c89b3c]/20 flex-shrink-0">
+                <img
+                  src="/assets/Teemo_cs.png"
+                  alt="Media"
+                  className="w-7 h-7 object-contain"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm group-hover:text-[#c89b3c] transition-colors">Media</p>
+                <p className="text-white/40 text-xs">Clips, highlights & more</p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-[#c89b3c] transition-colors flex-shrink-0" />
             </Link>
 
+            {/* Challenges */}
             <Link
               href="/challenges"
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-white/10 transition-all duration-200"
+              className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/15 transition-all duration-200"
             >
-              <span className="text-xl">⚡</span>
-              <span className="text-white font-semibold text-sm">Challenges</span>
+              <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-yellow-500/10 border border-yellow-500/20 flex-shrink-0">
+                <span className="text-xl leading-none">⚡</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm group-hover:text-yellow-400 transition-colors">Challenges</p>
+                <p className="text-white/40 text-xs">Daily & weekly goals</p>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-yellow-400 transition-colors flex-shrink-0" />
             </Link>
           </div>
+
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#c89b3c]/30 to-transparent" />
         </div>
       )}
     </nav>

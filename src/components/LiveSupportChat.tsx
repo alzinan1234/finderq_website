@@ -122,17 +122,17 @@ export function LiveSupportChat({
       {!isOpen && (
         <button
           onClick={handleOpenChat}
-          className="w-16 h-16 bg-gradient-to-br from-[#00d4ff] to-[#0066ff] hover:from-[#00b8e6] hover:to-[#0055cc] rounded-full shadow-2xl flex items-center justify-center transition-all group relative hover:scale-110 animate-pulse"
+          className="  shadow-2xl rounded-full flex items-center justify-center transition-all group relative hover:scale-110 animate-pulse overflow-hidden"
           title="Open Support Chat"
           style={{ 
             position: 'fixed',
             bottom: '24px',
             right: '24px',
             zIndex: 999999,
-            boxShadow: '0 0 30px rgba(0, 212, 255, 0.6), 0 0 60px rgba(0, 212, 255, 0.3)'
+           
           }}
         >
-          <MessageCircle className="w-7 h-7 text-white" />
+          <img src="/assets/support-chat-logo.png" alt="Support Chat" className="w-40 h-40 object-cover" />
           {hasUnreadMessages && (
             <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#0055cc] rounded-full flex items-center justify-center animate-pulse">
               <span className="text-white text-xs font-bold">!</span>
@@ -140,10 +140,10 @@ export function LiveSupportChat({
           )}
           
           {/* Pulse ring effect */}
-          <div className="absolute inset-0 rounded-full bg-[#00d4ff] opacity-50 animate-ping" />
+        
           
           {/* Glow ring */}
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-[#00d4ff] to-[#0066ff] opacity-30 blur-xl" />
+         
         </button>
       )}
           

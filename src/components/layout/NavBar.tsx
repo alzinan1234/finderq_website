@@ -185,15 +185,15 @@ export function NavBar() {
   return (
     <>
       {/* ── Issue #9: Riot Games disclaimer bar (pink line) — GSAP infinite left-to-right marquee ── */}
-      <div
+      {/* <div
         className="fixed top-0 left-0 right-0 z-[60] overflow-hidden text-[10px] sm:text-xs text-white/50 bg-[#0a0e27]/90 backdrop-blur-sm border-b border-pink-500/30 py-3 leading-tight"
         style={{ borderBottomColor: '#ff69b4' }}
-      >
-        <div ref={disclaimerRef} className="flex whitespace-nowrap will-change-transform">
+      > */}
+        {/* <div ref={disclaimerRef} className="flex whitespace-nowrap will-change-transform">
           <span className="flex-shrink-0 pr-16">{DISCLAIMER_TEXT}</span>
           <span className="flex-shrink-0 pr-16">{DISCLAIMER_TEXT}</span>
-        </div>
-      </div>
+        </div> */}
+      {/* </div> */}
 
       <nav
         id="main-navbar"

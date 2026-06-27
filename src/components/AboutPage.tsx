@@ -1,12 +1,17 @@
 // @ts-nocheck
 'use client'
 import React, { useEffect, useRef } from 'react'
-import { MessageCircle, Shield, Sparkles } from 'lucide-react'
+import { MessageCircle, Shield, Sparkles, AlertTriangle } from 'lucide-react'
 import gsap from 'gsap'
 import { translations, LanguageCode } from '@/utils/translations'
 
 const backgroundImage = '/assets/aY1Un5.jpg'
-const finderQLogo = '/assets/999999-Photoroom.png'
+const finderQLogo     = '/assets/999999-Photoroom.png'
+
+// ── Issue #8: logo paths ──────────────────────────────────────────────────────
+// Replace these two strings with the real asset paths in your project
+const POST_AD_LOGO  = '/assets/YOUR_POST_AD_LOGO.png'       // ← replace with your "post an ad" logo
+const RIOT_LOGO     = '/assets/Riot_Games_logo_icon.webp'   // ← downloaded from mediafire link in issue #8
 
 interface AboutPageProps {
   onGetStarted: () => void
@@ -33,9 +38,13 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
 
   return (
     <div className="min-h-screen bg-[#0a0e27] overflow-x-hidden">
+
       {/* Hero */}
-      <div ref={heroRef} className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div
+        ref={heroRef}
+        className="relative min-h-screen flex items-center justify-center overflow-hidden"
+        style={{ backgroundImage: `url(${backgroundImage})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
+      >
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0e27]/40 via-[#0a0e27]/20 to-[#0a0e27]/90" />
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-48 sm:w-72 md:w-96 h-48 sm:h-72 md:h-96 bg-[#00d4ff]/20 rounded-full blur-[80px] sm:blur-[120px] animate-pulse" />
@@ -54,13 +63,18 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
             {t('heroDescription')}
           </p>
           <div data-gsap="hero-item">
-            <button onClick={onGetStarted}
-              className="group px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white rounded-xl hover:from-[#0066ff] hover:to-[#00d4ff] transition-all shadow-xl hover:shadow-[#00d4ff]/40 hover:scale-105 duration-300 text-sm sm:text-base font-bold">
-              <span className="flex items-center gap-2">Get Started Now <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" /></span>
+            <button
+              onClick={onGetStarted}
+              className="group px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white rounded-xl hover:from-[#0066ff] hover:to-[#00d4ff] transition-all shadow-xl hover:shadow-[#00d4ff]/40 hover:scale-105 duration-300 text-sm sm:text-base font-bold"
+            >
+              <span className="flex items-center gap-2">
+                Get Started Now <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+              </span>
             </button>
             <p className="text-white/40 text-xs sm:text-sm mt-3">Free to join · No credit card required</p>
           </div>
         </div>
+
         <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-32 bg-gradient-to-t from-[#0a0e27] to-transparent" />
       </div>
 
@@ -78,22 +92,35 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
-            {/* Post an Ad */}
+
+            {/* ── Issue #8: Post an Ad card — replaced logo ── */}
             <div className="group relative bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-2xl p-5 sm:p-8 border border-[#00d4ff]/20 hover:border-[#00d4ff]/60 transition-all duration-300">
               <div className="absolute inset-0 bg-[#00d4ff]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#00d4ff] to-[#00b8e6] rounded-xl flex items-center justify-center shadow-lg shadow-[#00d4ff]/30 flex-shrink-0">
-                    <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#00d4ff] to-[#00b8e6] rounded-xl flex items-center justify-center shadow-lg shadow-[#00d4ff]/30 flex-shrink-0 overflow-hidden">
+                    <img
+                      src={POST_AD_LOGO}
+                      alt="Post an Ad"
+                      className="w-full h-full object-contain p-1"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                      }}
+                    />
+                    {/* Fallback icon if logo fails to load */}
+                    <span style={{ display: 'none' }} className="w-full h-full items-center justify-center">
+                      <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </span>
                   </div>
                   <h3 className="text-white text-xl sm:text-2xl font-bold">Post an Ad</h3>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
                   {[
-                    { n: 1, title: 'Select Your Region', desc: 'Choose EUW, EUNE, NA, KR, or BR from the region selector' },
+                    { n: 1, title: 'Select Your Region',      desc: 'Choose EUW, EUNE, NA, KR, or BR from the region selector' },
                     { n: 2, title: 'Click "Create New Post"', desc: 'Fill in your rank, preferred roles, and game modes' },
-                    { n: 3, title: 'Write Your Message', desc: 'Describe what you\'re looking for and publish your ad' },
-                    { n: 4, title: 'Connect with Players', desc: 'Receive messages and start playing together!' },
+                    { n: 3, title: 'Write Your Message',      desc: "Describe what you're looking for and publish your ad" },
+                    { n: 4, title: 'Connect with Players',    desc: 'Receive messages and start playing together!' },
                   ].map(s => (
                     <div key={s.n} className="flex items-start gap-3">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#00d4ff]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -109,22 +136,34 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
               </div>
             </div>
 
-            {/* Connect Riot Account */}
+            {/* ── Issue #8: Connect Riot Account card — Riot Games logo ── */}
             <div className="group relative bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-2xl p-5 sm:p-8 border border-[#c89b3c]/20 hover:border-[#c89b3c]/60 transition-all duration-300">
               <div className="absolute inset-0 bg-[#c89b3c]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#c89b3c] to-[#8b6914] rounded-xl flex items-center justify-center shadow-lg shadow-[#c89b3c]/30 flex-shrink-0">
-                    <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#d0393b] rounded-xl flex items-center justify-center shadow-lg shadow-[#d0393b]/40 flex-shrink-0 overflow-hidden">
+                    <img
+                      src={RIOT_LOGO}
+                      alt="Riot Games"
+                      className="w-full h-full object-contain p-1.5"
+                      onError={e => {
+                        e.currentTarget.style.display = 'none';
+                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
+                      }}
+                    />
+                    {/* Fallback icon */}
+                    <span style={{ display: 'none' }} className="w-full h-full items-center justify-center">
+                      <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                    </span>
                   </div>
                   <h3 className="text-white text-xl sm:text-2xl font-bold">Connect Riot Account</h3>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
                   {[
-                    { n: 1, title: 'Open Your Profile', desc: 'Click on your avatar in the top-right corner' },
-                    { n: 2, title: 'Click "Link Riot Account"', desc: 'Enter your Riot ID and tagline (e.g., Username#EUW)' },
-                    { n: 3, title: 'Get Verified', desc: 'Your rank, champions, and stats will be synced automatically' },
-                    { n: 4, title: 'Unlock Riot Verified Badge', desc: 'Show others you\'re a verified player with exclusive features' },
+                    { n: 1, title: 'Open Your Profile',           desc: 'Click on your avatar in the top-right corner' },
+                    { n: 2, title: 'Click "Link Riot Account"',   desc: 'Enter your Riot ID and tagline (e.g., Username#EUW)' },
+                    { n: 3, title: 'Get Verified',                desc: 'Your rank, champions, and stats will be synced automatically' },
+                    { n: 4, title: 'Unlock Riot Verified Badge',  desc: "Show others you're a verified player with exclusive features" },
                   ].map(s => (
                     <div key={s.n} className="flex items-start gap-3">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#c89b3c]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -142,13 +181,35 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
           </div>
 
           <div className="text-center mt-10 sm:mt-14">
-            <button onClick={onGetStarted}
-              className="group px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white rounded-xl hover:scale-105 transition-all shadow-xl hover:shadow-[#00d4ff]/40 duration-300 text-sm sm:text-base font-bold">
-              <span className="flex items-center gap-2">Get Started Now <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" /></span>
+            <button
+              onClick={onGetStarted}
+              className="group px-8 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white rounded-xl hover:scale-105 transition-all shadow-xl hover:shadow-[#00d4ff]/40 duration-300 text-sm sm:text-base font-bold"
+            >
+              <span className="flex items-center gap-2">
+                Get Started Now <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+              </span>
             </button>
           </div>
         </div>
       </div>
+
+      {/* ── Issue #9: Riot Games Disclaimer (pink line section) ── */}
+      <div className="relative bg-[#0a0e27] px-4 sm:px-6 pb-10 sm:pb-16">
+        <div className="max-w-4xl mx-auto">
+          {/* Pink divider line */}
+          <div className="w-full h-px mb-6 sm:mb-8" style={{ background: 'linear-gradient(90deg, transparent, #ff69b4, transparent)' }} />
+
+          <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-pink-500/15 bg-pink-500/5">
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400/60 flex-shrink-0 mt-0.5" />
+            <p className="text-white/35 text-[11px] sm:text-xs leading-relaxed">
+              This website is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or
+              anyone officially involved in producing or managing Riot Games properties. Riot Games and League of
+              Legends are trademarks or registered trademarks of Riot Games, Inc.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="h-10 sm:h-16 bg-[#0a0e27]" />
     </div>
   )

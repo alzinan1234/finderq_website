@@ -2,6 +2,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useAppStore } from '@/store/appStore';
 const teemoLanguageIcon = '/assets/11111.png';
 
 interface Language {
@@ -47,15 +48,22 @@ const languages: Language[] = [
 ];
 
 interface LanguageSelectorProps {
-  currentLanguage: string;
-  onLanguageChange: (code: string) => void;
+  currentLanguage?: string;
+  onLanguageChange?: (code: string) => void;
+  selectedLanguage?: string;
 }
 
-export function LanguageSelector({ currentLanguage, onLanguageChange }: LanguageSelectorProps) {
+export function LanguageSelector({ currentLanguage, onLanguageChange, selectedLanguage: selectedLanguageProp }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const selectedLanguage = languages.find(lang => lang.code === currentLanguage) || languages[0];
+  // Read directly from store so flag always reflects actual state
+  const storeLanguage = useAppStore(s => s.selectedLanguage);
+  const setSelectedLanguage = useAppStore(s => s.setSelectedLanguage);
+
+  // Use store value as source of truth — prop is ignored for display
+  const activeLang = storeLanguage;
+  const selectedLangObj = languages.find(lang => lang.code === activeLang) || languages[0];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -63,36 +71,39 @@ export function LanguageSelector({ currentLanguage, onLanguageChange }: Language
         setIsOpen(false);
       }
     }
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleChange = (code: string) => {
+    // Update store directly
+    setSelectedLanguage(code);
+    // Also call prop callback if provided
+    if (onLanguageChange) onLanguageChange(code);
+    setIsOpen(false);
+  };
 
   return (
     <div className="fixed top-38 right-4 z-[60]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 cursor-pointer group overflow-visible"
+        className="flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 cursor-pointer group"
       >
-        <span className="text-white font-semibold text-sm">{selectedLanguage.flag}</span>
+        {/* Flag updates instantly from store */}
+        <span className="text-white font-semibold text-sm">{selectedLangObj.flag}</span>
         <ChevronDown className={`w-4 h-4 text-[#00d4ff] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {/* Dropdown */}
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-64 max-h-96 overflow-y-auto bg-[#0a0e27]/90 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl z-[70]">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/5 to-transparent pointer-events-none" />
-
+          <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/5 to-transparent pointer-events-none rounded-xl" />
           <div className="py-2">
             {languages.map((lang) => (
               <button
                 key={lang.code}
-                onClick={() => {
-                  onLanguageChange(lang.code);
-                  setIsOpen(false);
-                }}
+                onClick={() => handleChange(lang.code)}
                 className={`relative w-full px-4 py-2.5 text-left transition-all duration-200 ${
-                  lang.code === currentLanguage
+                  lang.code === activeLang
                     ? 'bg-white/10 text-white'
                     : 'text-white/70 hover:text-white hover:bg-white/5'
                 }`}
@@ -100,7 +111,7 @@ export function LanguageSelector({ currentLanguage, onLanguageChange }: Language
                 <div className="flex items-center gap-3">
                   <span className="text-xl">{lang.flag}</span>
                   <span className="font-semibold text-sm">{lang.name}</span>
-                  {lang.code === currentLanguage && (
+                  {lang.code === activeLang && (
                     <div className="ml-auto w-2 h-2 rounded-full bg-[#00d4ff]" />
                   )}
                 </div>

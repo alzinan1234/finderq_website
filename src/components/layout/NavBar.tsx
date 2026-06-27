@@ -355,7 +355,7 @@ export function NavBar() {
           </Link>
 
           {/* ── Issue #8: Post an Ad button with replaced logo ── */}
-          {isLoggedIn && (
+          {/* {isLoggedIn && (
             <button
               onClick={() => set({ isPostAdOpen: true } as any)}
               className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 cursor-pointer overflow-visible"
@@ -368,7 +368,7 @@ export function NavBar() {
               />
               <span className="text-white font-semibold text-sm">{t('postAd') || 'Post an Ad'}</span>
             </button>
-          )}
+          )} */}
 
           {/* Bell */}
           {isLoggedIn && (

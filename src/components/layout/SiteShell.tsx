@@ -35,13 +35,103 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { translations, LanguageCode } from '@/utils/translations'
 import { toast } from 'sonner'
 
+// ─── Google Translate Provider ───────────────────────────────────────────────
+const googleLangMap: Record<string, string> = {
+  'en': 'en', 'ro': 'ro', 'pl': 'pl', 'tr': 'tr', 'fr': 'fr',
+  'de': 'de', 'es': 'es', 'it': 'it', 'pt': 'pt', 'pt-br': 'pt',
+  'ru': 'ru', 'el': 'el', 'hu': 'hu', 'cs': 'cs', 'sk': 'sk',
+  'nl': 'nl', 'sv': 'sv', 'da': 'da', 'no': 'no', 'fi': 'fi',
+  'bg': 'bg', 'uk': 'uk', 'sr': 'sr', 'hr': 'hr', 'sl': 'sl',
+  'ko': 'ko', 'ja': 'ja', 'ar': 'ar', 'vi': 'vi', 'zh-tw': 'zh-TW',
+  'tl': 'tl', 'ms': 'ms', 'id': 'id',
+}
+
+function GoogleTranslateProvider({ language }: { language: string }) {
+  useEffect(() => {
+    // Inject hide styles once
+    if (!document.getElementById('gt-hide-style')) {
+      const style = document.createElement('style')
+      style.id = 'gt-hide-style'
+      style.textContent = `
+        .goog-te-banner-frame, .skiptranslate, #goog-gt-tt,
+        .goog-te-balloon-frame, div#goog-gt-tt,
+        .VIpgJd-ZVi9od-aZ2wEe-wOHMyf { display: none !important; }
+        body { top: 0 !important; }
+        .goog-te-gadget { font-size: 0 !important; }
+        iframe.skiptranslate { display: none !important; }
+        .goog-te-menu-frame { display: none !important; }
+      `
+      document.head.appendChild(style)
+    }
+
+    // Hidden container for widget
+    if (!document.getElementById('google-translate-container')) {
+      const div = document.createElement('div')
+      div.id = 'google-translate-container'
+      div.style.cssText = 'position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;'
+      document.body.appendChild(div)
+    }
+
+    // Init callback
+    ;(window as any).googleTranslateElementInit = () => {
+      try {
+        new (window as any).google.translate.TranslateElement(
+          { pageLanguage: 'en', autoDisplay: false, multilanguagePage: true, gaTrack: false },
+          'google-translate-container'
+        )
+      } catch {}
+    }
+
+    // Load script once
+    if (!document.getElementById('google-translate-script')) {
+      const script = document.createElement('script')
+      script.id = 'google-translate-script'
+      script.src = '//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit'
+      script.async = true
+      document.head.appendChild(script)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const googleLang = googleLangMap[language] || language
+
+    const applyLang = (attempts = 0) => {
+      if (language === 'en') {
+        // Reset to English via cookie
+        document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${window.location.hostname}`
+        document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement
+        if (combo) { combo.value = 'en'; combo.dispatchEvent(new Event('change')) }
+        return
+      }
+      // Set cookie for persistence
+      document.cookie = `googtrans=/en/${googleLang}; path=/; domain=${window.location.hostname}`
+      document.cookie = `googtrans=/en/${googleLang}; path=/`
+
+      const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement
+      if (combo) {
+        combo.value = googleLang
+        combo.dispatchEvent(new Event('change'))
+      } else if (attempts < 25) {
+        setTimeout(() => applyLang(attempts + 1), 400)
+      }
+    }
+
+    const t = setTimeout(() => applyLang(), 300)
+    return () => clearTimeout(t)
+  }, [language])
+
+  return null
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
 function makeT(lang: string) {
   return (key: string): string => {
     const l = lang as LanguageCode
     return (translations[l] as any)?.[key] || (translations.en as any)[key] || key
   }
 }
-
 
 function RiotSyncWrapper({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false)
@@ -69,6 +159,7 @@ function RiotSyncWrapper({ onClose }: { onClose: () => void }) {
   )
 }
 
+// ─── Main SiteShell ──────────────────────────────────────────────────────────
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const store = useAppStore()
   const { language } = useTranslation()
@@ -118,6 +209,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }, [hasPremium, store.lastPostTime, set])
 
   const handleRegister = (username: string, email: string, password: string, region: string) => {
+    // Save account language at registration time
+    if (typeof window !== 'undefined' && signUpLanguage) {
+      localStorage.setItem(`finderq_account_language_${username}`, signUpLanguage)
+    }
     const newUser = {
       id: Date.now(), username, name: username, email, password, region,
       role: 'user', isBanned: false,
@@ -125,12 +220,27 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       avatar: '', banner: '', permissions: {},
     }
     setOwnerUsers((prev: any[]) => [...prev, newUser])
-    set({ isLoggedIn: true, userName: username, userEmail: email, userRegion: region, userJoinDate: newUser.joinDate, isSignUpOpen: false, isVerificationOpen: false })
+    set({
+      isLoggedIn: true, userName: username, userEmail: email,
+      userRegion: region, userJoinDate: newUser.joinDate,
+      isSignUpOpen: false, isVerificationOpen: false,
+      // Apply chosen language immediately after registration
+      selectedLanguage: signUpLanguage || selectedLanguage,
+      userLanguage: signUpLanguage || selectedLanguage,
+      userAccountLanguage: signUpLanguage || selectedLanguage,
+    })
+    // Apply Google Translate for new user's language
+    if (signUpLanguage && signUpLanguage !== 'en' && typeof window !== 'undefined') {
+      localStorage.setItem('finderq_language', signUpLanguage)
+    }
     toast.success(`Welcome to FinderQ, ${username}!`)
   }
 
   return (
     <div className="min-h-screen bg-[#0a0e27] text-white">
+      {/* ── Google Translate: full-site translation ── */}
+      <GoogleTranslateProvider language={selectedLanguage} />
+
       <NavBar />
       <main className="">{children}</main>
 
@@ -179,7 +289,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         onLoginClick={() => set({ isLoginOpen: true })}
       />
 
-      {/* Auth Modals */}
+      {/* ── Auth Modals ── */}
       {isSignUpOpen && (
         <SignUpModal
           isOpen={isSignUpOpen} onClose={() => set({ isSignUpOpen: false })} t={t}
@@ -224,7 +334,19 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           setIsGoogleSignUp={(v) => set({ isGoogleSignUp: v })}
           setIsGoogleNamePromptOpen={(v) => set({ isGoogleNamePromptOpen: v })}
           setIsLoggedIn={(v) => set({ isLoggedIn: v })}
-          setUserName={setUserName}
+          setUserName={(username) => {
+            setUserName(username)
+            // #6 FIX: restore saved language for this account on login
+            if (typeof window !== 'undefined') {
+              const savedLang = localStorage.getItem(`finderq_account_language_${username}`)
+              if (savedLang && savedLang !== 'en') {
+                setTimeout(() => {
+                  set({ selectedLanguage: savedLang, userLanguage: savedLang, userAccountLanguage: savedLang })
+                  localStorage.setItem('finderq_language', savedLang)
+                }, 100)
+              }
+            }
+          }}
           setUserEmail={setUserEmail}
           setIsAdmin={(v) => set({ isAdmin: v })}
           setIsOwner={(v) => set({ isOwner: v })}
@@ -238,9 +360,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
 
       {isForgotPasswordOpen && (
         <ForgotPasswordModal
-          isOpen={isForgotPasswordOpen} onClose={() => set({ isForgotPasswordOpen: false, forgotPasswordSent: false, forgotPasswordEmail: '' })}
-          forgotPasswordEmail={forgotPasswordEmail} setForgotPasswordEmail={(v) => set({ forgotPasswordEmail: v })}
-          forgotPasswordSent={forgotPasswordSent} setForgotPasswordSent={(v) => set({ forgotPasswordSent: v })}
+          isOpen={isForgotPasswordOpen}
+          onClose={() => set({ isForgotPasswordOpen: false, forgotPasswordSent: false, forgotPasswordEmail: '' })}
+          forgotPasswordEmail={forgotPasswordEmail}
+          setForgotPasswordEmail={(v) => set({ forgotPasswordEmail: v })}
+          forgotPasswordSent={forgotPasswordSent}
+          setForgotPasswordSent={(v) => set({ forgotPasswordSent: v })}
           onBackToLogin={() => set({ isForgotPasswordOpen: false, isLoginOpen: true })}
         />
       )}
@@ -291,7 +416,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Profile */}
+      {/* ── Profile ── */}
       {isProfileOpen && (
         <ProfileModal
           isOpen={isProfileOpen} onClose={() => set({ isProfileOpen: false })}
@@ -323,7 +448,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           publicProfileSeasonRanks={publicProfileSeasonRanks}
           isUserOnline={isUserOnline}
           onReportProfile={() => set({ isReportProfileModalOpen: true })}
-          onMessageClick={(username, initials, color) => { addFriend({ username, initials, color }); set({ openThreadRequest: { username, initials, color }, isPublicProfileOpen: false }) }}
+          onMessageClick={(username, initials, color) => {
+            addFriend({ username, initials, color })
+            set({ openThreadRequest: { username, initials, color }, isPublicProfileOpen: false })
+          }}
         />
       )}
 
@@ -420,7 +548,12 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           isOpen={isReportModalOpen} onClose={() => set({ isReportModalOpen: false })}
           postId={reportPostId} author={reportAuthor} content={reportContent}
           onSubmitReport={(postId, author, reason, details) => {
-            const newReport = { id: adminReports.length + 1, type: 'post', reportedUser: author, reportedBy: isLoggedIn ? userName : 'Anonymous', reason, post: `Post #${postId}`, postContent: reportContent, details, date: new Date().toLocaleString(), status: 'pending' }
+            const newReport = {
+              id: adminReports.length + 1, type: 'post', reportedUser: author,
+              reportedBy: isLoggedIn ? userName : 'Anonymous', reason,
+              post: `Post #${postId}`, postContent: reportContent, details,
+              date: new Date().toLocaleString(), status: 'pending',
+            }
             set({ adminReports: [newReport, ...adminReports], isReportModalOpen: false })
             toast.success('Report submitted!')
           }}
@@ -436,9 +569,7 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {isRiotSyncOpen && (
-        <RiotSyncWrapper onClose={() => set({ isRiotSyncOpen: false })} />
-      )}
+      {isRiotSyncOpen && <RiotSyncWrapper onClose={() => set({ isRiotSyncOpen: false })} />}
 
       {isTournamentDetailsOpen && selectedTournamentId !== null && (
         <TournamentDetails
@@ -459,7 +590,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         <CreateTournamentModal
           onClose={() => set({ isCreateTournamentOpen: false })}
           onCreateTournament={(tournament) => {
-            set({ pendingTournaments: [...pendingTournaments, { ...tournament, id: Date.now(), status: 'pending', createdBy: userName }], isCreateTournamentOpen: false })
+            set({
+              pendingTournaments: [...pendingTournaments, { ...tournament, id: Date.now(), status: 'pending', createdBy: userName }],
+              isCreateTournamentOpen: false,
+            })
             toast.success('Tournament submitted for review!')
           }}
           organizerName={userName}

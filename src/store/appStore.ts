@@ -63,13 +63,11 @@ function setLS(key: string, val: string) {
 }
 
 interface AppState {
-  // UI
   currentPage: string
   selectedRegion: string
   searchQuery: string
   isRegionDropdownOpen: boolean
 
-  // Auth
   isLoggedIn: boolean
   userName: string
   userEmail: string
@@ -83,17 +81,15 @@ interface AppState {
   rememberMe: boolean
   userStatus: UserStatus
 
-  // User prefs
   selectedLanguage: string
   userLanguage: string
-  userAccountLanguage: string
+  userAccountLanguage: string  // Language saved when account was created
   userNameColor: string
   userProfileBackground: string
   userPostBackground: string
   postBorder: string
   hasPremium: boolean
 
-  // Riot
   riotAccountLinked: boolean
   riotProfileData: any
   riotDataIsReal: boolean
@@ -105,7 +101,6 @@ interface AppState {
   seasonRanks: any[]
   publicProfileSeasonRanks: any[]
 
-  // Post form
   showPostForm: boolean
   postContent: string
   postImage: string
@@ -119,12 +114,10 @@ interface AppState {
   lastPostTime: number
   postCooldownRemaining: number
 
-  // Wallet
   walletBalance: number
   userTournamentEarnings: number
   userTournamentName: string
 
-  // Posts per region
   postsEUW: Post[]
   postsEUNE: Post[]
   postsNA: Post[]
@@ -136,15 +129,12 @@ interface AppState {
   postsJP: Post[]
   postsMESEA: Post[]
 
-  // Notifications
   notifications: Notification[]
   isNotificationPanelOpen: boolean
 
-  // Friends & messages
   friends: Friend[]
   openThreadRequest: { username: string; initials: string; color: string } | null
 
-  // Modals open state
   isSignUpOpen: boolean
   isLoginOpen: boolean
   isProfileOpen: boolean
@@ -172,16 +162,13 @@ interface AppState {
   isSupportChatOpen: boolean
   isSupportMinimized: boolean
 
-  // Report modal data
   reportPostId: number
   reportAuthor: string
   reportContent: string
 
-  // Profile viewing
   selectedUserProfile: any
   activePublicProfileTab: 'overview' | 'reputation'
 
-  // Login/signup form state
   loginEmail: string
   loginPassword: string
   signUpUsername: string
@@ -202,12 +189,10 @@ interface AppState {
   pendingUserData: any
   isFromGoogle: boolean
 
-  // Tournament
   selectedTournamentId: number | null
   selectedTournamentStatus: string
   pendingTournaments: any[]
 
-  // Admin/Owner
   adminUsers: any[]
   adminPosts: any[]
   adminReports: any[]
@@ -216,13 +201,11 @@ interface AppState {
   activityLogs: any[]
   adminTab: AdminTab
 
-  // Support
   supportConversations: Record<string, any[]>
   selectedSupportUser: string | null
   closedSupportConversations: Set<string>
   supportInputMessage: string
 
-  // Actions
   set: (partial: Partial<AppState>) => void
   setCurrentPage: (page: string) => void
   setSelectedRegion: (region: string) => void
@@ -253,6 +236,8 @@ interface AppState {
   openModal: (modal: string) => void
   closeModal: (modal: string) => void
   initFromLocalStorage: () => void
+  // #6 fix: save account language on login, restore on next login
+  loginWithLanguageRestore: (userData: { username: string; email: string; region: string; isAdmin?: boolean; isOwner?: boolean; isModerator?: boolean; joinDate?: string }) => void
 }
 
 const defaultNotifications: Notification[] = [
@@ -435,26 +420,23 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ userStatus: v })
     setLS('userStatus', v)
   },
+
+  // #6 FIX: When language changes, save to localStorage
   setSelectedLanguage: (v) => {
     set({ selectedLanguage: v, userLanguage: v })
     setLS('finderq_language', v)
+    // If user is logged in, also save as their account language
+    const { isLoggedIn, userName } = get()
+    if (isLoggedIn && userName) {
+      setLS(`finderq_account_language_${userName}`, v)
+    }
   },
-  setUserNameColor: (v) => {
-    set({ userNameColor: v })
-    setLS('finderq_username_color', v)
-  },
-  setUserProfileBackground: (v) => {
-    set({ userProfileBackground: v })
-    setLS('finderq_profile_background', v)
-  },
-  setUserPostBackground: (v) => {
-    set({ userPostBackground: v })
-    setLS('finderq_post_background', v)
-  },
-  setHasPremium: (v) => {
-    set({ hasPremium: v })
-    setLS('finderq_premium', v.toString())
-  },
+
+  setUserNameColor: (v) => { set({ userNameColor: v }); setLS('finderq_username_color', v) },
+  setUserProfileBackground: (v) => { set({ userProfileBackground: v }); setLS('finderq_profile_background', v) },
+  setUserPostBackground: (v) => { set({ userPostBackground: v }); setLS('finderq_post_background', v) },
+  setHasPremium: (v) => { set({ hasPremium: v }); setLS('finderq_premium', v.toString()) },
+
   setWalletBalance: (updater) => {
     const current = get().walletBalance
     const next = typeof updater === 'function' ? updater(current) : updater
@@ -469,9 +451,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       TR: 'postsTR', JP: 'postsJP', 'ME/SEA': 'postsMESEA',
     }
     const key = regionMap[region]
-    if (key) {
-      set((state: any) => ({ [key]: [post, ...state[key]] }))
-    }
+    if (key) set((state: any) => ({ [key]: [post, ...state[key]] }))
   },
 
   deletePost: (postId) => {
@@ -493,98 +473,77 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   addNotification: (n) => set(state => ({ notifications: [n, ...state.notifications] })),
-  markNotificationRead: (id) => set(state => ({
-    notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n)
-  })),
-  markAllNotificationsRead: () => set(state => ({
-    notifications: state.notifications.map(n => ({ ...n, read: true }))
-  })),
+  markNotificationRead: (id) => set(state => ({ notifications: state.notifications.map(n => n.id === id ? { ...n, read: true } : n) })),
+  markAllNotificationsRead: () => set(state => ({ notifications: state.notifications.map(n => ({ ...n, read: true })) })),
   clearAllNotifications: () => set({ notifications: [], isNotificationPanelOpen: false }),
 
-  addFriend: (f) => set(state => ({
-    friends: state.friends.find(fr => fr.username === f.username) ? state.friends : [...state.friends, f]
-  })),
-  removeFriend: (username) => set(state => ({
-    friends: state.friends.filter(f => f.username !== username)
-  })),
+  addFriend: (f) => set(state => ({ friends: state.friends.find(fr => fr.username === f.username) ? state.friends : [...state.friends, f] })),
+  removeFriend: (username) => set(state => ({ friends: state.friends.filter(f => f.username !== username) })),
 
   handleSupportMessage: (userId, message) => set(state => ({
-    supportConversations: {
-      ...state.supportConversations,
-      [userId]: [...(state.supportConversations[userId] || []), message]
-    }
+    supportConversations: { ...state.supportConversations, [userId]: [...(state.supportConversations[userId] || []), message] }
   })),
 
   handleCloseSupportConversation: (userId) => {
     const state = get()
-    const closedMsg = {
-      id: (state.supportConversations[userId]?.length || 0) + 1,
-      sender: 'support' as const,
-      senderName: 'System',
-      content: 'This conversation has been closed by support. If you need further assistance, please contact us again.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }
-    const newClosed = new Set(state.closedSupportConversations)
-    newClosed.add(userId)
-    set({
-      closedSupportConversations: newClosed,
-      supportConversations: {
-        ...state.supportConversations,
-        [userId]: [...(state.supportConversations[userId] || []), closedMsg]
-      }
-    })
+    const closedMsg = { id: (state.supportConversations[userId]?.length || 0) + 1, sender: 'support' as const, senderName: 'System', content: 'This conversation has been closed by support. If you need further assistance, please contact us again.', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    const newClosed = new Set(state.closedSupportConversations); newClosed.add(userId)
+    set({ closedSupportConversations: newClosed, supportConversations: { ...state.supportConversations, [userId]: [...(state.supportConversations[userId] || []), closedMsg] } })
   },
 
   handleReopenSupportConversation: (userId) => {
     const state = get()
-    const reopenMsg = {
-      id: (state.supportConversations[userId]?.length || 0) + 1,
-      sender: 'support' as const,
-      senderName: 'System',
-      content: 'This conversation has been reopened. How can we help you?',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }
-    const newClosed = new Set(state.closedSupportConversations)
-    newClosed.delete(userId)
-    set({
-      closedSupportConversations: newClosed,
-      supportConversations: {
-        ...state.supportConversations,
-        [userId]: [...(state.supportConversations[userId] || []), reopenMsg]
-      }
-    })
+    const reopenMsg = { id: (state.supportConversations[userId]?.length || 0) + 1, sender: 'support' as const, senderName: 'System', content: 'This conversation has been reopened. How can we help you?', timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    const newClosed = new Set(state.closedSupportConversations); newClosed.delete(userId)
+    set({ closedSupportConversations: newClosed, supportConversations: { ...state.supportConversations, [userId]: [...(state.supportConversations[userId] || []), reopenMsg] } })
   },
 
   handleStartNewSupportConversation: () => {
     const { userName, closedSupportConversations } = get()
     if (!userName) return
-    const newClosed = new Set(closedSupportConversations)
-    newClosed.delete(userName)
-    const welcomeMsg = {
-      id: 1,
-      sender: 'support' as const,
-      senderName: 'FinderQ Support',
-      content: `Hello ${userName}! Welcome back to FinderQ Support. How can we help you today?`,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    }
-    set(state => ({
-      closedSupportConversations: newClosed,
-      supportConversations: { ...state.supportConversations, [userName]: [welcomeMsg] }
-    }))
+    const newClosed = new Set(closedSupportConversations); newClosed.delete(userName)
+    const welcomeMsg = { id: 1, sender: 'support' as const, senderName: 'FinderQ Support', content: `Hello ${userName}! Welcome back to FinderQ Support. How can we help you today?`, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    set(state => ({ closedSupportConversations: newClosed, supportConversations: { ...state.supportConversations, [userName]: [welcomeMsg] } }))
   },
 
   logout: () => {
+    // Save current language before logout
+    const { selectedLanguage, userName } = get()
+    if (userName) setLS(`finderq_account_language_${userName}`, selectedLanguage)
     if (typeof window !== 'undefined') {
       localStorage.removeItem('finderq_remember_me')
       localStorage.removeItem('finderq_saved_username')
       localStorage.removeItem('finderq_saved_email')
       localStorage.removeItem('finderq_saved_region')
     }
+    set({ isLoggedIn: false, userName: '', userEmail: '', isAdmin: false, isOwner: false, isModerator: false, rememberMe: false, currentPage: 'about' } as any)
+  },
+
+  // #6 FIX: Restore account language on login
+  loginWithLanguageRestore: (userData) => {
+    const savedLang = getLS(`finderq_account_language_${userData.username}`, '')
+    const langToUse = savedLang || getLS('finderq_language', 'en')
     set({
-      isLoggedIn: false, userName: '', userEmail: '',
-      isAdmin: false, isOwner: false, isModerator: false,
-      rememberMe: false, currentPage: 'about', isProfileDropdownOpen: false,
-    } as any)
+      isLoggedIn: true,
+      userName: userData.username,
+      userEmail: userData.email,
+      userRegion: userData.region,
+      isAdmin: userData.isAdmin || false,
+      isOwner: userData.isOwner || false,
+      isModerator: userData.isModerator || false,
+      userJoinDate: userData.joinDate || '',
+      selectedLanguage: langToUse,
+      userLanguage: langToUse,
+      userAccountLanguage: langToUse,
+    })
+    setLS('finderq_language', langToUse)
+    // Trigger Google Translate if non-english
+    if (langToUse !== 'en' && typeof window !== 'undefined') {
+      setTimeout(() => {
+        const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement
+        if (combo) { combo.value = langToUse; combo.dispatchEvent(new Event('change')) }
+      }, 500)
+    }
   },
 
   openModal: (modal) => set({ [`is${modal}Open`]: true } as any),
@@ -593,9 +552,16 @@ export const useAppStore = create<AppState>((set, get) => ({
   initFromLocalStorage: () => {
     if (typeof window === 'undefined') return
     const rememberMe = localStorage.getItem('finderq_remember_me') === 'true'
+    const savedUsername = getLS('finderq_saved_username')
+    // #6 FIX: Restore account-specific language if logged in
+    const accountLang = savedUsername ? getLS(`finderq_account_language_${savedUsername}`, '') : ''
+    const globalLang = getLS('finderq_language', 'en')
+    const langToUse = (rememberMe && accountLang) ? accountLang : globalLang
+
     const updates: Partial<AppState> = {
-      selectedLanguage: getLS('finderq_language', 'en'),
-      userAccountLanguage: getLS('finderq_account_language', 'en'),
+      selectedLanguage: langToUse,
+      userLanguage: langToUse,
+      userAccountLanguage: langToUse,
       userNameColor: getLS('finderq_username_color', 'from-blue-500 to-indigo-500'),
       userProfileBackground: getLS('finderq_profile_background', 'from-[#0a0e27] via-[#1a1d29] to-[#0a0e27]'),
       userPostBackground: getLS('finderq_post_background', 'from-[#1a1d29] to-[#242836]'),
@@ -612,9 +578,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       imagePositionX: parseInt(getLS('finderq_post_image_x', '50')),
       imagePositionY: parseInt(getLS('finderq_post_image_y', '50')),
     }
-    if (rememberMe) {
+    if (rememberMe && savedUsername) {
       updates.isLoggedIn = true
-      updates.userName = getLS('finderq_saved_username')
+      updates.userName = savedUsername
       updates.userEmail = getLS('finderq_saved_email')
       updates.userRegion = getLS('finderq_saved_region', 'euw')
       updates.rememberMe = true
@@ -626,6 +592,5 @@ export const useAppStore = create<AppState>((set, get) => ({
     set(updates as any)
   },
 
-  // Extra state needed
   isProfileDropdownOpen: false,
 }))

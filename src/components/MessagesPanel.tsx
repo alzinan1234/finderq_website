@@ -1,9 +1,10 @@
 // @ts-nocheck
 'use client'
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 const teemoBannerBottom = '/assets/2343242342.jpg';
-import { MessageCircle, X, Send, ChevronDown, Users, UserMinus, ShieldOff, Minus, ShieldCheck, UserPlus, Check } from 'lucide-react';
+import { MessageCircle, X, Send, ChevronDown, Users, UserMinus, ShieldOff, Minus, ShieldCheck, UserPlus, Check, Image, Smile, Trash2 } from 'lucide-react';
 import { useOnlinePresence } from '@/hooks/useOnlinePresence';
+import EmojiPicker from 'emoji-picker-react';
 
 interface Friend {
   username: string;
@@ -39,7 +40,7 @@ interface ChatMessage {
   type: 'text' | 'image';
   sender: 'me' | 'them';
   time: string;
-  reactions?: Record<string, string[]>;
+  reactions: Record<string, number>;
 }
 
 interface OpenThread {
@@ -51,9 +52,7 @@ interface OpenThread {
 }
 
 const MAX_OPEN_THREADS = 3;
-
-const EMOJIS = ['😀','😂','😍','🥰','😎','🤔','😢','😡','👍','👎','❤️','🔥','🎉','💯','🙏','👏','🤣','😅','😭','🥺','✨','💪','🚀','🎮','⚡'];
-const REACTION_EMOJIS = ['❤️','👍','😂','😮','😢','😡'];
+const REACTION_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥'];
 
 export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewProfile, onAddFriend, openThreadRequest, onThreadOpened, currentUserId }: MessagesPanelProps) {
   const { getUserStatus } = useOnlinePresence(currentUserId || null);
@@ -64,9 +63,9 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
     { username: "SilverBolt", initials: "SB", color: "from-blue-400 to-cyan-500", mutualFriends: 0, timeAgo: "1h ago" },
     { username: "PentakillQueen", initials: "PQ", color: "from-purple-500 to-pink-500", mutualFriends: 4, timeAgo: "3h ago" },
   ]);
-  const [blockConfirm, setBlockConfirm] = useState<{username: string; initials: string; color: string} | null>(null);
+  const [blockConfirm, setBlockConfirm] = useState<{ username: string; initials: string; color: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [blockedUsers, setBlockedUsers] = useState<Array<{username: string; initials: string; color: string}>>([
+  const [blockedUsers, setBlockedUsers] = useState<Array<{ username: string; initials: string; color: string }>>([
     { username: "ToxicPlayer123", initials: "TP", color: "from-gray-500 to-gray-700" },
   ]);
   const [friendMenu, setFriendMenu] = useState<string | null>(null);
@@ -89,96 +88,60 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
     },
   ]);
 
-  // #12 — Sound removed: playBuzzSound function deleted entirely
+  // #12 — No sound at all
 
   const openThread = (username: string, initials: string, color: string) => {
     if (blockedUsers.find(b => b.username === username)) return;
     if (openThreads.find(t => t.username === username)) return;
     if (openThreads.length >= MAX_OPEN_THREADS) {
-      alert(`Poți deschide maxim ${MAX_OPEN_THREADS} conversații simultan. Închide una pentru a deschide alta.`);
+      alert(`Max ${MAX_OPEN_THREADS} open chats. Close one first.`);
       return;
     }
-    // No sound played on open (#12 fix)
-    setOpenThreads([...openThreads, { username, initials, color, messages: [] }]);
+    setOpenThreads(prev => [...prev, { username, initials, color, messages: [] }]);
     if (onThreadOpened) onThreadOpened();
   };
 
-  const closeThread = (username: string) => {
-    setOpenThreads(openThreads.filter(t => t.username !== username));
-  };
+  const closeThread = (username: string) => setOpenThreads(prev => prev.filter(t => t.username !== username));
 
   const sendMessage = (username: string, text: string, type: 'text' | 'image' = 'text') => {
-    setOpenThreads(prev => prev.map(thread => {
-      if (thread.username !== username) return thread;
-      return {
-        ...thread,
-        messages: [...thread.messages, {
-          id: Date.now(),
-          text,
-          type,
-          sender: 'me' as const,
-          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-          reactions: {}
-        }]
-      };
-    }));
-
-    // Auto-reply (no sound)
+    const newMsg: ChatMessage = {
+      id: Date.now(), text, type, sender: 'me',
+      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+      reactions: {}
+    };
+    setOpenThreads(prev => prev.map(t => t.username === username ? { ...t, messages: [...t.messages, newMsg] } : t));
     if (type === 'text') {
       setTimeout(() => {
-        setOpenThreads(prev => prev.map(thread => {
-          if (thread.username !== username) return thread;
-          return {
-            ...thread,
-            messages: [...thread.messages, {
-              id: Date.now(),
-              text: 'Hey! Thanks for your message! 👋',
-              type: 'text' as const,
-              sender: 'them' as const,
-              time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-              reactions: {}
-            }]
-          };
-        }));
-      }, 2000);
+        const reply: ChatMessage = {
+          id: Date.now() + 1, text: 'Hey! Thanks for your message! 👋', type: 'text', sender: 'them',
+          time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+          reactions: {}
+        };
+        setOpenThreads(prev => prev.map(t => t.username === username ? { ...t, messages: [...t.messages, reply] } : t));
+      }, 1500);
     }
   };
 
-  // #14 — Delete message
   const deleteMessage = (username: string, msgId: number) => {
-    setOpenThreads(prev => prev.map(thread => {
-      if (thread.username !== username) return thread;
-      return { ...thread, messages: thread.messages.filter(m => m.id !== msgId) };
-    }));
+    setOpenThreads(prev => prev.map(t => t.username === username ? { ...t, messages: t.messages.filter(m => m.id !== msgId) } : t));
   };
 
-  // #16 — Reaction
   const addReaction = (username: string, msgId: number, emoji: string) => {
-    setOpenThreads(prev => prev.map(thread => {
-      if (thread.username !== username) return thread;
+    setOpenThreads(prev => prev.map(t => {
+      if (t.username !== username) return t;
       return {
-        ...thread,
-        messages: thread.messages.map(m => {
+        ...t,
+        messages: t.messages.map(m => {
           if (m.id !== msgId) return m;
-          const reactions = { ...(m.reactions || {}) };
-          if (!reactions[emoji]) reactions[emoji] = [];
-          if (reactions[emoji].includes('me')) {
-            reactions[emoji] = reactions[emoji].filter(u => u !== 'me');
-            if (reactions[emoji].length === 0) delete reactions[emoji];
-          } else {
-            reactions[emoji] = [...reactions[emoji], 'me'];
-          }
+          const reactions = { ...m.reactions };
+          reactions[emoji] = (reactions[emoji] || 0) + 1;
           return { ...m, reactions };
         })
       };
     }));
   };
 
-  const blockUser = (username: string, initials: string, color: string) => {
-    setBlockConfirm({ username, initials, color });
-    setFriendMenu(null);
-  };
-
+  const blockUser = (username: string, initials: string, color: string) => { setBlockConfirm({ username, initials, color }); setFriendMenu(null); };
   const confirmBlock = () => {
     if (!blockConfirm) return;
     setBlockedUsers(prev => [...prev, blockConfirm]);
@@ -186,12 +149,9 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
     closeThread(blockConfirm.username);
     setBlockConfirm(null);
   };
+  const unblockUser = (username: string) => setBlockedUsers(prev => prev.filter(b => b.username !== username));
 
-  const unblockUser = (username: string) => {
-    setBlockedUsers(prev => prev.filter(b => b.username !== username));
-  };
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (openThreadRequest) openThread(openThreadRequest.username, openThreadRequest.initials, openThreadRequest.color);
   }, [openThreadRequest]);
 
@@ -199,61 +159,38 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
 
   return (
     <>
-      {/* Delete Friend Confirmation Modal */}
+      {/* Delete Friend Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center overflow-y-auto z-[99999] p-4">
-          <div className="bg-[#1e2130] rounded-2xl max-w-sm w-full border border-red-500/30 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
+          <div className="bg-[#1e2130] rounded-2xl max-w-sm w-full border border-red-500/30 shadow-2xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-red-700 via-red-500 to-red-400" />
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20">
-                  <UserMinus className="w-5 h-5 text-red-400" />
-                </div>
-                <div>
-                  <h3 className="text-white font-bold">Șterge prieten</h3>
-                  <p className="text-white/50 text-xs">{deleteConfirm}</p>
-                </div>
-              </div>
-              <div className="bg-[#141622] rounded-xl p-4 mb-5 space-y-2">
-                <p className="text-white/70 text-xs font-medium mb-2">După ce ștergi acest prieten:</p>
-                <div className="flex items-start gap-2"><span className="text-red-400 text-xs mt-0.5">✕</span><p className="text-white/60 text-xs">Va fi șters din lista ta de prieteni</p></div>
-                <div className="flex items-start gap-2"><span className="text-red-400 text-xs mt-0.5">✕</span><p className="text-white/60 text-xs">Conversația nu va mai fi accesibilă</p></div>
-                <div className="flex items-start gap-2"><span className="text-green-400 text-xs mt-0.5">✓</span><p className="text-white/60 text-xs">Îl poți adăuga din nou oricând</p></div>
+                <div className="w-10 h-10 bg-red-500/10 rounded-xl flex items-center justify-center border border-red-500/20"><UserMinus className="w-5 h-5 text-red-400" /></div>
+                <div><h3 className="text-white font-bold">Remove Friend</h3><p className="text-white/50 text-xs">{deleteConfirm}</p></div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 rounded-lg text-sm border border-white/10 transition-colors">Anulează</button>
-                <button onClick={() => { onRemoveFriend(deleteConfirm); closeThread(deleteConfirm); setDeleteConfirm(null); }} className="flex-1 py-2.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-lg text-sm font-semibold transition-all">Da, șterge</button>
+                <button onClick={() => setDeleteConfirm(null)} className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 rounded-lg text-sm border border-white/10 transition-colors">Cancel</button>
+                <button onClick={() => { onRemoveFriend(deleteConfirm); closeThread(deleteConfirm); setDeleteConfirm(null); }} className="flex-1 py-2.5 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg text-sm font-semibold transition-all">Remove</button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Block Confirmation Modal */}
+      {/* Block Modal */}
       {blockConfirm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center overflow-y-auto z-[99999] p-4">
-          <div className="bg-[#1e2130] rounded-2xl max-w-sm w-full border border-orange-500/30 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[99999] p-4">
+          <div className="bg-[#1e2130] rounded-2xl max-w-sm w-full border border-orange-500/30 shadow-2xl overflow-hidden">
             <div className="h-1 bg-gradient-to-r from-orange-600 via-orange-400 to-red-500" />
             <div className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20">
-                  <ShieldOff className="w-5 h-5 text-orange-400" />
-                </div>
-                <div>
-                  <h3 className="text-white font-bold">Blochează utilizator</h3>
-                  <p className="text-white/50 text-xs">{blockConfirm.username}</p>
-                </div>
-              </div>
-              <div className="bg-[#141622] rounded-xl p-4 mb-5 space-y-2">
-                <p className="text-white/70 text-xs font-medium mb-2">După ce blochezi acest utilizator:</p>
-                <div className="flex items-start gap-2"><span className="text-red-400 text-xs mt-0.5">✕</span><p className="text-white/60 text-xs">Nu mai pot să îți trimită mesaje</p></div>
-                <div className="flex items-start gap-2"><span className="text-red-400 text-xs mt-0.5">✕</span><p className="text-white/60 text-xs">Nu mai pot să te vadă în căutare</p></div>
-                <div className="flex items-start gap-2"><span className="text-red-400 text-xs mt-0.5">✕</span><p className="text-white/60 text-xs">Va fi șters din lista ta de prieteni</p></div>
-                <div className="flex items-start gap-2"><span className="text-green-400 text-xs mt-0.5">✓</span><p className="text-white/60 text-xs">Poți da unblock oricând din lista Blocked</p></div>
+                <div className="w-10 h-10 bg-orange-500/10 rounded-xl flex items-center justify-center border border-orange-500/20"><ShieldOff className="w-5 h-5 text-orange-400" /></div>
+                <div><h3 className="text-white font-bold">Block User</h3><p className="text-white/50 text-xs">{blockConfirm.username}</p></div>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setBlockConfirm(null)} className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 rounded-lg text-sm border border-white/10 transition-colors">Anulează</button>
-                <button onClick={confirmBlock} className="flex-1 py-2.5 bg-gradient-to-r from-orange-600 to-red-500 hover:from-orange-700 hover:to-red-600 text-white rounded-lg text-sm font-semibold transition-all">Da, blochează</button>
+                <button onClick={() => setBlockConfirm(null)} className="flex-1 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 rounded-lg text-sm border border-white/10 transition-colors">Cancel</button>
+                <button onClick={confirmBlock} className="flex-1 py-2.5 bg-gradient-to-r from-orange-600 to-red-500 text-white rounded-lg text-sm font-semibold transition-all">Block</button>
               </div>
             </div>
           </div>
@@ -261,7 +198,7 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
       )}
 
       {/* Chat Threads */}
-      <div className="fixed bottom-0 left-0 right-0 sm:right-auto z-40 pointer-events-none px-4 sm:pl-72 flex flex-col-reverse sm:flex-row items-end gap-3 max-w-full overflow-x-auto sm:overflow-x-visible pb-12 sm:pb-0">
+      <div className="fixed bottom-0 left-0 right-0 sm:right-auto z-40 pointer-events-none px-4 sm:pl-72 flex flex-col-reverse sm:flex-row items-end gap-3 pb-12 sm:pb-0">
         {openThreads.map((thread, index) => (
           <div key={thread.username} className="pointer-events-auto w-full sm:w-72 flex-shrink-0" style={{ order: index }}>
             <ChatThread
@@ -277,7 +214,7 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
         ))}
       </div>
 
-      {/* Master Main Panel */}
+      {/* Main Panel */}
       <div
         className="fixed bottom-0 left-4 md:left-6 z-40 w-[calc(100%-32px)] sm:w-64 max-w-sm"
         onMouseEnter={() => setIsHovered(true)}
@@ -285,128 +222,104 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
       >
         {isHovered && (
           <div className="mb-2 bg-[#1a1d29] rounded-t-2xl border border-white/10 shadow-2xl overflow-hidden max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-2 duration-200">
-            <div className="flex border-b border-white/10 flex-shrink-0 overflow-x-auto">
-              <button onClick={() => setActiveTab('messages')} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors min-w-[55px] ${activeTab === 'messages' ? 'text-[#00d4ff] border-b-2 border-[#00d4ff]' : 'text-white/50 hover:text-white/80'}`}>
-                <MessageCircle className="w-3.5 h-3.5" />Messages
-              </button>
-              <button onClick={() => setActiveTab('friends')} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors min-w-[55px] ${activeTab === 'friends' ? 'text-[#00d4ff] border-b-2 border-[#00d4ff]' : 'text-white/50 hover:text-white/80'}`}>
-                <Users className="w-3.5 h-3.5" />Friends
-              </button>
-              <button onClick={() => setActiveTab('requests')} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors min-w-[55px] ${activeTab === 'requests' ? 'text-green-400 border-b-2 border-green-400' : 'text-white/50 hover:text-white/80'}`}>
-                <UserPlus className="w-3.5 h-3.5" />
-                <span className="flex items-center gap-0.5">Requests {friendRequests.length > 0 && <span className="px-1 bg-green-500/20 text-green-400 rounded-full text-[9px]">{friendRequests.length}</span>}</span>
-              </button>
-              <button onClick={() => setActiveTab('blocked')} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors min-w-[55px] ${activeTab === 'blocked' ? 'text-orange-400 border-b-2 border-orange-400' : 'text-white/50 hover:text-white/80'}`}>
-                <ShieldOff className="w-3.5 h-3.5" />
-                <span className="flex items-center gap-0.5">Blocked {blockedUsers.length > 0 && <span className="px-1 bg-orange-500/20 text-orange-400 rounded-full text-[9px]">{blockedUsers.length}</span>}</span>
-              </button>
+            <div className="flex border-b border-white/10 flex-shrink-0">
+              {[
+                { key: 'messages', label: 'Messages', icon: <MessageCircle className="w-3.5 h-3.5" />, color: 'text-[#00d4ff] border-[#00d4ff]' },
+                { key: 'friends', label: 'Friends', icon: <Users className="w-3.5 h-3.5" />, color: 'text-[#00d4ff] border-[#00d4ff]' },
+                { key: 'requests', label: 'Requests', icon: <UserPlus className="w-3.5 h-3.5" />, color: 'text-green-400 border-green-400', badge: friendRequests.length },
+                { key: 'blocked', label: 'Blocked', icon: <ShieldOff className="w-3.5 h-3.5" />, color: 'text-orange-400 border-orange-400', badge: blockedUsers.length },
+              ].map(tab => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
+                  className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors min-w-0 ${activeTab === tab.key ? `${tab.color} border-b-2` : 'text-white/50 hover:text-white/80'}`}>
+                  {tab.icon}
+                  <span className="flex items-center gap-0.5">{tab.label}{tab.badge ? <span className="px-1 bg-current/20 rounded-full text-[9px] opacity-70">{tab.badge}</span> : null}</span>
+                </button>
+              ))}
             </div>
 
-            <div className="h-[220px] overflow-y-auto custom-scrollbar flex-1">
-              {activeTab !== 'blocked' && activeTab !== 'requests' && (
-                <div>
-                  {visibleFriends.length === 0 ? (
-                    <div className="p-4 text-center">
-                      <Users className="w-8 h-8 text-white/20 mx-auto mb-2" />
-                      <p className="text-white/40 text-xs">No {activeTab === 'messages' ? 'conversations' : 'friends'} yet</p>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-white/5">
-                      {visibleFriends.map((friend) => {
-                        const status = getUserStatus(friend.username);
-                        return (
-                          <div key={friend.username} className="relative flex items-center gap-2 p-2 hover:bg-white/5 transition-colors group">
-                            <button onClick={() => openThread(friend.username, friend.initials, friend.color)} className="flex items-center gap-2 flex-1 min-w-0">
-                              <div className="relative flex-shrink-0">
-                                <div className={`w-9 h-9 bg-gradient-to-br ${friend.color} rounded-full flex items-center justify-center`}>
-                                  <span className="text-white text-xs">{friend.initials}</span>
-                                </div>
-                                {status === 'online' && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-yellow-400 rounded-full border-2 border-[#1a1d29]" />}
-                                {status === 'busy' && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#1a1d29]" />}
-                                {status === 'offline' && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-gray-500 rounded-full border-2 border-[#1a1d29]" />}
+            <div className="h-[220px] overflow-y-auto">
+              {(activeTab === 'messages' || activeTab === 'friends') && (
+                visibleFriends.length === 0 ? (
+                  <div className="p-4 text-center"><Users className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/40 text-xs">No friends yet</p></div>
+                ) : (
+                  <div className="divide-y divide-white/5">
+                    {visibleFriends.map((friend) => {
+                      const status = getUserStatus(friend.username);
+                      return (
+                        <div key={friend.username} className="relative flex items-center gap-2 p-2 hover:bg-white/5 transition-colors group">
+                          <button onClick={() => openThread(friend.username, friend.initials, friend.color)} className="flex items-center gap-2 flex-1 min-w-0">
+                            <div className="relative flex-shrink-0">
+                              <div className={`w-9 h-9 bg-gradient-to-br ${friend.color} rounded-full flex items-center justify-center`}>
+                                <span className="text-white text-xs">{friend.initials}</span>
                               </div>
-                              <div className="flex-1 min-w-0 text-left">
-                                <p className="text-white text-xs font-medium truncate">{friend.username}</p>
-                                {activeTab === 'messages' && friend.lastMessage && <p className="text-white/50 text-xs truncate">{friend.lastMessage}</p>}
-                                {activeTab === 'friends' && <p className={`text-xs ${status === 'online' ? 'text-yellow-400' : status === 'busy' ? 'text-red-400' : 'text-white/30'}`}>{status === 'online' ? '● Online' : status === 'busy' ? '● Busy' : '● Offline'}</p>}
-                              </div>
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); setFriendMenu(friendMenu === friend.username ? null : friend.username); }} className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-lg opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-white/50 font-bold text-xs">···</button>
-                            {friendMenu === friend.username && (
-                              <div className="absolute right-2 bottom-9 bg-[#242836] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden min-w-[140px]">
-                                <button onClick={() => { setDeleteConfirm(friend.username); setFriendMenu(null); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 text-red-400 text-xs transition-colors"><UserMinus className="w-3.5 h-3.5" />Delete Friend</button>
-                                <button onClick={() => blockUser(friend.username, friend.initials, friend.color)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-orange-500/10 text-orange-400 text-xs transition-colors"><ShieldOff className="w-3.5 h-3.5" />Block</button>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                              <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#1a1d29] ${status === 'online' ? 'bg-yellow-400' : status === 'busy' ? 'bg-red-500' : 'bg-gray-500'}`} />
+                            </div>
+                            <div className="flex-1 min-w-0 text-left">
+                              <p className="text-white text-xs font-medium truncate">{friend.username}</p>
+                              <p className={`text-xs ${status === 'online' ? 'text-yellow-400' : status === 'busy' ? 'text-red-400' : 'text-white/30'}`}>
+                                {status === 'online' ? '● Online' : status === 'busy' ? '● Busy' : '● Offline'}
+                              </p>
+                            </div>
+                          </button>
+                          <button onClick={(e) => { e.stopPropagation(); setFriendMenu(friendMenu === friend.username ? null : friend.username); }} className="w-6 h-6 flex items-center justify-center rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all text-white/50 text-xs">···</button>
+                          {friendMenu === friend.username && (
+                            <div className="absolute right-2 bottom-9 bg-[#242836] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden min-w-[140px]">
+                              <button onClick={() => { setDeleteConfirm(friend.username); setFriendMenu(null); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 text-red-400 text-xs transition-colors"><UserMinus className="w-3.5 h-3.5" />Remove Friend</button>
+                              <button onClick={() => blockUser(friend.username, friend.initials, friend.color)} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-orange-500/10 text-orange-400 text-xs transition-colors"><ShieldOff className="w-3.5 h-3.5" />Block</button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )
               )}
 
               {activeTab === 'requests' && (
-                <div>
-                  {friendRequests.length === 0 ? (
-                    <div className="p-4 text-center"><UserPlus className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/40 text-xs">No friend requests</p></div>
-                  ) : (
-                    <div className="divide-y divide-white/5">
-                      {friendRequests.map((req) => (
-                        <div key={req.username} className="flex items-center gap-2 p-2.5 hover:bg-white/5 transition-colors">
-                          <div className={`w-9 h-9 bg-gradient-to-br ${req.color} rounded-full flex items-center justify-center flex-shrink-0`}><span className="text-white text-xs">{req.initials}</span></div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-xs font-medium truncate">{req.username}</p>
-                            <p className="text-white/30 text-[10px] truncate">{req.mutualFriends ? `${req.mutualFriends} mutual friends` : 'No mutual friends'} · {req.timeAgo}</p>
-                          </div>
-                          <div className="flex gap-1 flex-shrink-0">
-                            <button onClick={() => { onAddFriend?.({ username: req.username, initials: req.initials, color: req.color }); setFriendRequests(prev => prev.filter(r => r.username !== req.username)); }} className="w-7 h-7 flex items-center justify-center rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400 transition-colors" title="Accept"><Check className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setFriendRequests(prev => prev.filter(r => r.username !== req.username))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors" title="Decline"><X className="w-3.5 h-3.5" /></button>
-                          </div>
+                friendRequests.length === 0
+                  ? <div className="p-4 text-center"><UserPlus className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/40 text-xs">No requests</p></div>
+                  : <div className="divide-y divide-white/5">
+                    {friendRequests.map(req => (
+                      <div key={req.username} className="flex items-center gap-2 p-2.5 hover:bg-white/5 transition-colors">
+                        <div className={`w-9 h-9 bg-gradient-to-br ${req.color} rounded-full flex items-center justify-center flex-shrink-0`}><span className="text-white text-xs">{req.initials}</span></div>
+                        <div className="flex-1 min-w-0"><p className="text-white text-xs font-medium truncate">{req.username}</p><p className="text-white/30 text-[10px]">{req.mutualFriends ? `${req.mutualFriends} mutual` : 'No mutual'} · {req.timeAgo}</p></div>
+                        <div className="flex gap-1">
+                          <button onClick={() => { onAddFriend?.({ username: req.username, initials: req.initials, color: req.color }); setFriendRequests(prev => prev.filter(r => r.username !== req.username)); }} className="w-7 h-7 flex items-center justify-center rounded-lg bg-green-500/20 hover:bg-green-500/30 text-green-400"><Check className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => setFriendRequests(prev => prev.filter(r => r.username !== req.username))} className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"><X className="w-3.5 h-3.5" /></button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    ))}
+                  </div>
               )}
 
               {activeTab === 'blocked' && (
-                <div>
-                  {blockedUsers.length === 0 ? (
-                    <div className="p-4 text-center"><ShieldCheck className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/40 text-xs">No blocked users</p></div>
-                  ) : (
-                    <div className="divide-y divide-white/5">
-                      {blockedUsers.map((blocked) => (
-                        <div key={blocked.username} className="flex items-center gap-2 p-2 hover:bg-white/5 transition-colors">
-                          <div className={`w-9 h-9 bg-gradient-to-br ${blocked.color} rounded-full flex items-center justify-center flex-shrink-0 opacity-50`}><span className="text-white text-xs">{blocked.initials}</span></div>
-                          <div className="flex-1 min-w-0"><p className="text-white/50 text-xs font-medium truncate">{blocked.username}</p><p className="text-orange-400/60 text-[10px]">Blocat</p></div>
-                          <button onClick={() => unblockUser(blocked.username)} className="flex-shrink-0 px-2 py-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs rounded-lg border border-green-500/20 transition-colors flex items-center gap-1"><ShieldCheck className="w-3 h-3" />Unblock</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                blockedUsers.length === 0
+                  ? <div className="p-4 text-center"><ShieldCheck className="w-8 h-8 text-white/20 mx-auto mb-2" /><p className="text-white/40 text-xs">No blocked users</p></div>
+                  : <div className="divide-y divide-white/5">
+                    {blockedUsers.map(blocked => (
+                      <div key={blocked.username} className="flex items-center gap-2 p-2 hover:bg-white/5">
+                        <div className={`w-9 h-9 bg-gradient-to-br ${blocked.color} rounded-full flex items-center justify-center flex-shrink-0 opacity-40`}><span className="text-white text-xs">{blocked.initials}</span></div>
+                        <div className="flex-1 min-w-0"><p className="text-white/50 text-xs truncate">{blocked.username}</p><p className="text-orange-400/60 text-[10px]">Blocked</p></div>
+                        <button onClick={() => unblockUser(blocked.username)} className="px-2 py-1 bg-green-500/10 hover:bg-green-500/20 text-green-400 text-xs rounded-lg border border-green-500/20 flex items-center gap-1"><ShieldCheck className="w-3 h-3" />Unblock</button>
+                      </div>
+                    ))}
+                  </div>
               )}
             </div>
-
-            {openThreads.length >= MAX_OPEN_THREADS && (
-              <div className="px-3 py-1.5 bg-amber-500/10 border-t border-amber-500/20 flex-shrink-0">
-                <p className="text-amber-400 text-[10px] text-center">Max {MAX_OPEN_THREADS} conversații deschise</p>
-              </div>
-            )}
           </div>
         )}
 
+        {/* Bottom Bar */}
         {(() => {
           const totalUnread = visibleFriends.reduce((sum, f) => sum + (f.unreadCount || 0), 0);
           return (
-            <div className="relative px-3 py-2.5 flex items-center justify-between cursor-pointer select-none rounded-t-lg overflow-hidden w-full">
-              <img src={teemoBannerBottom} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+            <div className="relative px-3 py-2.5 flex items-center justify-between cursor-pointer select-none rounded-t-lg overflow-hidden">
+              <img src={teemoBannerBottom} alt="" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/30" />
               <div className="relative flex items-center gap-2 z-10">
                 <div className="relative">
                   <MessageCircle className="w-4 h-4 text-white" />
-                  {totalUnread > 0 && <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center border border-white/30 animate-pulse">{totalUnread > 9 ? '9+' : totalUnread}</span>}
+                  {totalUnread > 0 && <span className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse">{totalUnread > 9 ? '9+' : totalUnread}</span>}
                 </div>
                 <h3 className="text-white text-sm font-medium drop-shadow">Messages</h3>
               </div>
@@ -419,6 +332,7 @@ export function MessagesPanel({ friends, onFriendClick, onRemoveFriend, onViewPr
   );
 }
 
+// ─── ChatThread ───────────────────────────────────────────────────────────────
 interface ChatThreadProps {
   thread: OpenThread;
   onClose: () => void;
@@ -432,165 +346,191 @@ interface ChatThreadProps {
 function ChatThread({ thread, onClose, onSendMessage, onDeleteMessage, onAddReaction, onViewProfile, onToggleMinimize }: ChatThreadProps) {
   const [message, setMessage] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; msgId: number } | null>(null);
-  const [reactionPicker, setReactionPicker] = useState<{ msgId: number } | null>(null);
+  const [hoveredMsg, setHoveredMsg] = useState<number | null>(null);
+  const [reactionTarget, setReactionTarget] = useState<number | null>(null);
   const minimized = thread.minimized ?? false;
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [thread.messages]);
 
-  // Close menus on outside click
-  React.useEffect(() => {
-    const handler = () => { setContextMenu(null); setReactionPicker(null); };
-    window.addEventListener('click', handler);
-    return () => window.removeEventListener('click', handler);
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) setShowEmojiPicker(false);
+      setReactionTarget(null);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
 
   const handleSend = () => {
-    if (message.trim()) { onSendMessage(message, 'text'); setMessage(''); setShowEmojiPicker(false); }
+    if (!message.trim()) return;
+    onSendMessage(message, 'text');
+    setMessage('');
+    setShowEmojiPicker(false);
   };
 
-  // #13 — Image upload
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => { onSendMessage(ev.target?.result as string, 'image'); };
+    reader.onload = (ev) => onSendMessage(ev.target?.result as string, 'image');
     reader.readAsDataURL(file);
     e.target.value = '';
   };
 
-  // #14 — Right-click context menu (only own messages)
-  const handleContextMenu = (e: React.MouseEvent, msgId: number, sender: string) => {
-    if (sender !== 'me') return;
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, msgId });
-  };
-
   return (
-    <div className={`bg-[#1a1d29] rounded-t-2xl border border-white/10 shadow-2xl flex flex-col w-full sm:w-72 max-w-full ${minimized ? 'h-auto' : 'h-80 sm:h-96'} transition-all duration-200`}>
+    <div className={`bg-[#1a1d29] rounded-t-2xl border border-white/10 shadow-2xl flex flex-col w-full sm:w-72 ${minimized ? 'h-auto' : 'h-80 sm:h-[380px]'} transition-all duration-200`}>
+
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#00d4ff] to-[#00b8e6] px-3 py-2 rounded-t-2xl flex items-center justify-between flex-shrink-0">
+      <div className="bg-gradient-to-r from-[#00d4ff] to-[#0099cc] px-3 py-2 rounded-t-2xl flex items-center justify-between flex-shrink-0">
         <button className="flex items-center gap-2 flex-1 min-w-0 hover:opacity-80 transition-opacity text-left" onClick={() => onViewProfile?.(thread.username)}>
-          <div className={`w-6 h-6 bg-gradient-to-br ${thread.color} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <span className="text-white text-xs">{thread.initials}</span>
+          <div className={`w-7 h-7 bg-gradient-to-br ${thread.color} rounded-full flex items-center justify-center flex-shrink-0 ring-2 ring-white/20`}>
+            <span className="text-white text-[10px] font-bold">{thread.initials}</span>
           </div>
-          <span className="text-white text-xs font-medium truncate">{thread.username}</span>
+          <div>
+            <p className="text-white text-xs font-semibold leading-tight">{thread.username}</p>
+            <p className="text-white/60 text-[10px]">Active now</p>
+          </div>
         </button>
         <div className="flex items-center gap-1 flex-shrink-0">
-          <button onClick={onToggleMinimize} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/20 transition-colors"><Minus className="w-3 h-3 text-white" /></button>
-          <button onClick={onClose} className="w-5 h-5 flex items-center justify-center rounded hover:bg-white/20 transition-colors"><X className="w-3 h-3 text-white" /></button>
+          <button onClick={onToggleMinimize} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"><Minus className="w-3 h-3 text-white" /></button>
+          <button onClick={onClose} className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"><X className="w-3 h-3 text-white" /></button>
         </div>
       </div>
 
-      {/* Context Menu #14 */}
-      {contextMenu && (
-        <div
-          className="fixed bg-[#242836] border border-white/10 rounded-lg shadow-xl z-[99999] overflow-hidden min-w-[140px]"
-          style={{ left: contextMenu.x, top: contextMenu.y }}
-          onClick={e => e.stopPropagation()}
-        >
-          <button onClick={() => { onDeleteMessage(contextMenu.msgId); setContextMenu(null); }} className="w-full flex items-center gap-2 px-3 py-2 hover:bg-red-500/10 text-red-400 text-xs transition-colors">
-            🗑️ Delete Message
-          </button>
-        </div>
-      )}
-
       {!minimized && (
         <>
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-[#1a1d29] custom-scrollbar">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1 bg-[#12141f]">
             {thread.messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <MessageCircle className="w-5 h-5 text-[#00d4ff] mb-2 opacity-50" />
-                <p className="text-white/40 text-xs">No messages yet</p>
+              <div className="flex flex-col items-center justify-center h-full text-center gap-1">
+                <MessageCircle className="w-6 h-6 text-[#00d4ff] opacity-40" />
+                <p className="text-white/30 text-xs">No messages yet</p>
               </div>
-            ) : (
-              <>
-                {thread.messages.map((msg) => (
-                  <div key={msg.id} className={`flex flex-col ${msg.sender === 'me' ? 'items-end' : 'items-start'} group`}>
-                    <div
-                      className={`relative max-w-[85%] sm:max-w-[80%] ${msg.sender === 'me' ? 'bg-gradient-to-r from-[#00d4ff] to-[#00b8e6]' : 'bg-white/10'} rounded-xl px-3 py-2`}
-                      onContextMenu={(e) => handleContextMenu(e, msg.id, msg.sender)}
-                    >
-                      <p className={`text-[10px] font-semibold mb-0.5 ${msg.sender === 'me' ? 'text-white/80' : 'text-[#00d4ff]'}`}>
-                        {msg.sender === 'me' ? 'Tu' : thread.username}
-                      </p>
+            ) : thread.messages.map((msg, idx) => {
+              const isMe = msg.sender === 'me';
+              const prevSame = idx > 0 && thread.messages[idx - 1].sender === msg.sender;
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-end gap-1.5 ${isMe ? 'justify-end' : 'justify-start'} ${prevSame ? 'mt-0.5' : 'mt-2'}`}
+                  onMouseEnter={() => setHoveredMsg(msg.id)}
+                  onMouseLeave={() => setHoveredMsg(null)}
+                >
+                  {/* Avatar them */}
+                  {!isMe && (
+                    <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${thread.color} flex-shrink-0 flex items-center justify-center ${prevSame ? 'invisible' : ''}`}>
+                      <span className="text-white text-[8px] font-bold">{thread.initials}</span>
+                    </div>
+                  )}
 
-                      {/* #13 — Image or text */}
+                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[78%]`}>
+                    {/* Bubble */}
+                    <div className={`relative rounded-2xl px-3 py-1.5 ${isMe ? 'bg-gradient-to-br from-[#00d4ff] to-[#0099cc] rounded-br-sm' : 'bg-[#242836] rounded-bl-sm'}`}>
                       {msg.type === 'image' ? (
-                        <img src={msg.text} alt="sent" className="max-w-full rounded-lg max-h-40 object-contain" />
+                        <img src={msg.text} alt="img" className="max-w-full rounded-xl max-h-36 object-contain" />
                       ) : (
                         <p className="text-white text-xs leading-relaxed break-words">{msg.text}</p>
                       )}
 
-                      <p className={`text-[10px] mt-0.5 ${msg.sender === 'me' ? 'text-white/70' : 'text-white/50'}`}>{msg.time}</p>
+                      {/* Hover actions */}
+                      {hoveredMsg === msg.id && (
+                        <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 ${isMe ? '-left-16' : '-right-16'}`}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setReactionTarget(reactionTarget === msg.id ? null : msg.id); }}
+                            className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e2130] border border-white/10 hover:bg-[#2e3347] text-xs"
+                          >😊</button>
+                          {isMe && (
+                            <button
+                              onClick={() => onDeleteMessage(msg.id)}
+                              className="w-6 h-6 flex items-center justify-center rounded-full bg-[#1e2130] border border-white/10 hover:bg-red-500/20 hover:border-red-400/30 transition-colors"
+                            >
+                              <Trash2 className="w-3 h-3 text-red-400" />
+                            </button>
+                          )}
+                        </div>
+                      )}
 
-                      {/* #16 — Reaction button on hover */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setReactionPicker(reactionPicker?.msgId === msg.id ? null : { msgId: msg.id }); }}
-                        className="absolute -top-2 -right-2 w-5 h-5 bg-[#242836] border border-white/10 rounded-full text-[10px] items-center justify-center hidden group-hover:flex hover:bg-white/10 transition-colors"
-                      >
-                        😊
-                      </button>
-
-                      {/* Reaction picker */}
-                      {reactionPicker?.msgId === msg.id && (
-                        <div className="absolute bottom-full mb-1 bg-[#242836] border border-white/10 rounded-xl px-2 py-1 flex gap-1 z-50 shadow-xl" onClick={e => e.stopPropagation()}>
+                      {/* Reaction popup */}
+                      {reactionTarget === msg.id && (
+                        <div className={`absolute bottom-full mb-1.5 bg-[#1e2130] border border-white/10 rounded-2xl px-2 py-1 flex gap-1.5 z-50 shadow-2xl ${isMe ? 'right-0' : 'left-0'}`} onClick={e => e.stopPropagation()}>
                           {REACTION_EMOJIS.map(emoji => (
-                            <button key={emoji} onClick={() => { onAddReaction(msg.id, emoji); setReactionPicker(null); }} className="text-base hover:scale-125 transition-transform">{emoji}</button>
+                            <button key={emoji} onClick={() => { onAddReaction(msg.id, emoji); setReactionTarget(null); }} className="text-lg hover:scale-150 transition-transform duration-100">{emoji}</button>
                           ))}
                         </div>
                       )}
                     </div>
 
-                    {/* Reactions display */}
-                    {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {Object.entries(msg.reactions).map(([emoji, users]) => (
-                          <button key={emoji} onClick={() => onAddReaction(msg.id, emoji)} className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] border transition-colors ${users.includes('me') ? 'bg-[#00d4ff]/20 border-[#00d4ff]/40 text-white' : 'bg-white/5 border-white/10 text-white/70'}`}>
-                            {emoji} {users.length}
-                          </button>
+                    {/* Reactions */}
+                    {Object.keys(msg.reactions).length > 0 && (
+                      <div className="flex gap-1 mt-0.5 flex-wrap">
+                        {Object.entries(msg.reactions).map(([emoji, count]) => (
+                          <span key={emoji} className="flex items-center gap-0.5 px-1.5 py-0.5 bg-[#1e2130] border border-white/10 rounded-full text-[10px] text-white/70">{emoji} {count}</span>
                         ))}
                       </div>
                     )}
+
+                    {/* Time (only last in group) */}
+                    {(!thread.messages[idx + 1] || thread.messages[idx + 1].sender !== msg.sender) && (
+                      <p className="text-white/25 text-[9px] mt-0.5 px-1">{msg.time}</p>
+                    )}
                   </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </>
-            )}
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} />
           </div>
 
-          {/* #15 — Emoji Picker */}
+          {/* Emoji Picker */}
           {showEmojiPicker && (
-            <div className="border-t border-white/10 p-2 grid grid-cols-8 gap-1 bg-[#141622]">
-              {EMOJIS.map(emoji => (
-                <button key={emoji} onClick={() => setMessage(prev => prev + emoji)} className="text-base hover:scale-125 transition-transform hover:bg-white/10 rounded p-0.5">{emoji}</button>
-              ))}
+            <div ref={emojiPickerRef} className="absolute bottom-14 left-0 z-50">
+              <EmojiPicker
+                onEmojiClick={(data) => setMessage(prev => prev + data.emoji)}
+                theme="dark"
+                width={280}
+                height={320}
+                searchDisabled={false}
+                skinTonesDisabled
+                previewConfig={{ showPreview: false }}
+              />
             </div>
           )}
 
-          <div className="p-2 border-t border-white/10 flex-shrink-0">
-            <div className="flex gap-1.5 items-center">
-              {/* #13 — Image upload button */}
-              <button onClick={() => fileInputRef.current?.click()} className="w-7 h-7 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors text-white/60 hover:text-white flex-shrink-0 text-sm" title="Send image">🖼️</button>
+          {/* Input */}
+          <div className="p-2 border-t border-white/10 bg-[#1a1d29] flex-shrink-0">
+            <div className="flex items-center gap-1.5 bg-[#12141f] border border-white/10 rounded-2xl px-2.5 py-1.5">
+              {/* Image */}
+              <button onClick={() => fileInputRef.current?.click()} className="text-white/40 hover:text-[#00d4ff] transition-colors flex-shrink-0" title="Send image">
+                <Image className="w-4 h-4" />
+              </button>
               <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
 
-              {/* #15 — Emoji toggle button */}
-              <button onClick={() => setShowEmojiPicker(prev => !prev)} className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 text-sm ${showEmojiPicker ? 'bg-[#00d4ff]/20 border-[#00d4ff]/40 text-[#00d4ff]' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`} title="Emoji">😊</button>
-
+              {/* Text */}
               <input
                 type="text"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder="Type a message..."
-                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-xs placeholder-white/40 focus:outline-none focus:border-[#00d4ff]/50"
+                placeholder={`Message ${thread.username}...`}
+                className="flex-1 bg-transparent text-white text-xs placeholder-white/30 focus:outline-none"
               />
-              <button onClick={handleSend} disabled={!message.trim()} className="px-2.5 bg-gradient-to-r from-[#00d4ff] to-[#00b8e6] text-white rounded-lg disabled:opacity-50 transition-opacity flex-shrink-0">
-                <Send className="w-3.5 h-3.5" />
+
+              {/* Emoji */}
+              <button onClick={() => setShowEmojiPicker(prev => !prev)} className={`flex-shrink-0 transition-colors ${showEmojiPicker ? 'text-[#00d4ff]' : 'text-white/40 hover:text-[#00d4ff]'}`}>
+                <Smile className="w-4 h-4" />
+              </button>
+
+              {/* Send */}
+              <button
+                onClick={handleSend}
+                disabled={!message.trim()}
+                className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${message.trim() ? 'bg-gradient-to-br from-[#00d4ff] to-[#0099cc] hover:opacity-90' : 'bg-white/10 cursor-not-allowed'}`}
+              >
+                <Send className="w-3 h-3 text-white" />
               </button>
             </div>
           </div>

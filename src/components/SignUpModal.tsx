@@ -1,6 +1,6 @@
 // @ts-nocheck
 'use client'
-import React from "react";
+import React, { useEffect } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -65,6 +65,17 @@ export function SignUpModal({
   setIsGoogleSignUp,
   setIsGoogleNamePromptOpen,
 }: SignUpModalProps) {
+
+  // ── Issue #7: language-selection notice, shown each time the modal opens ──
+  useEffect(() => {
+    if (isOpen) {
+      toast.info('🌐 Selectează limba!', {
+        description: 'Selectarea limbii este obligatorie pentru a-ți crea contul.',
+        duration: 4000,
+      });
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
@@ -77,6 +88,16 @@ export function SignUpModal({
       return;
     }
     if (signUpUsername && signUpEmail && signUpPassword) {
+      // ── Issue #4: only Gmail / Yahoo addresses are accepted ──
+      const emailDomain = signUpEmail.trim().toLowerCase().split('@')[1] || '';
+      if (!['gmail.com', 'yahoo.com'].includes(emailDomain)) {
+        toast.error('Email invalid!', {
+          description: 'Trebuie să folosești o adresă Gmail sau Yahoo (ex: @gmail.com sau @yahoo.com).',
+          duration: 4000,
+        });
+        return;
+      }
+
       const takenUsernames: string[] = JSON.parse(localStorage.getItem('finderq_registered_usernames') || '[]');
       if (takenUsernames.map((u: string) => u.toLowerCase()).includes(signUpUsername.toLowerCase())) {
         toast.error('Username already taken!', {

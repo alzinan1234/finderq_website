@@ -134,7 +134,7 @@ export function LiveSupportChat({
         >
           <MessageCircle className="w-7 h-7 text-white" />
           {hasUnreadMessages && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#0055cc] rounded-full flex items-center justify-center animate-pulse">
               <span className="text-white text-xs font-bold">!</span>
             </div>
           )}
@@ -159,7 +159,7 @@ export function LiveSupportChat({
           }}
         >
           {/* Header */}
-          <div className="bg-red-600 text-white px-4 py-2.5 rounded-t-2xl flex items-center justify-between border-b border-white/10">
+          <div className="bg-gradient-to-r from-[#00d4ff] to-[#0099cc] text-white px-4 py-2.5 rounded-t-2xl flex items-center justify-between border-b border-white/10">
             <div className="flex flex-col">
               <span className="font-semibold text-sm tracking-wide">Support Live</span>
               <div className="flex items-center gap-1">

@@ -5,7 +5,7 @@ import {
   X, Wallet as WalletIcon, TrendingUp, TrendingDown, Plus, Send,
   ArrowUpRight, ArrowDownLeft, CreditCard, DollarSign, Euro, Calendar,
   Trophy, Gamepad2, Banknote, CheckCircle, Clock, AlertCircle,
-  Building2, ShieldCheck, Filter, ChevronDown
+  Building2, ShieldCheck, Filter, ChevronDown, Landmark, RefreshCw
 } from 'lucide-react';
 
 const walletHeaderLogo = '/assets/ChatGPT_Image_Jun_10__2026__11_30_49_AM-removebg-preview-1.png';
@@ -27,6 +27,32 @@ interface Transaction {
   date: string;
   status: 'completed' | 'pending' | 'failed';
 }
+
+type PaymentMethod = 'paypal' | 'revolut' | 'bank_transfer';
+
+const PAYMENT_METHODS: { id: PaymentMethod; label: string; icon: React.ReactNode; color: string; desc: string }[] = [
+  {
+    id: 'paypal',
+    label: 'PayPal',
+    icon: <Banknote className="w-5 h-5" />,
+    color: 'from-[#003087] to-[#009cde]',
+    desc: 'Instant · No fees',
+  },
+  {
+    id: 'revolut',
+    label: 'Revolut',
+    icon: <RefreshCw className="w-5 h-5" />,
+    color: 'from-[#191c1f] to-[#5a5f6e]',
+    desc: 'Instant · No fees',
+  },
+  {
+    id: 'bank_transfer',
+    label: 'Bank Transfer',
+    icon: <Landmark className="w-5 h-5" />,
+    color: 'from-cyan-700 to-cyan-500',
+    desc: '1–3 business days',
+  },
+];
 
 const txIcon = (type: Transaction['type'], amount: number) => {
   if (type === 'tournament_win') return <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />;
@@ -64,6 +90,13 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'settings'>('overview');
 
+  // Payment method selection
+  const [selectedDepositMethod, setSelectedDepositMethod] = useState<PaymentMethod | null>(null);
+  const [selectedWithdrawMethod, setSelectedWithdrawMethod] = useState<PaymentMethod | null>(null);
+
+  // Withdraw submitted state (pending admin approval)
+  const [withdrawSubmitted, setWithdrawSubmitted] = useState(false);
+
   const transactions: Transaction[] = [
     { id: 1, type: 'tournament_win', amount: 500.00, currency: 'EUR', description: 'Spring Championship 2026 — 1st Place', date: '2026-04-05', status: 'completed' },
     { id: 2, type: 'tournament_entry', amount: -50.00, currency: 'EUR', description: 'Spring Championship 2026 — Entry Fee', date: '2026-04-01', status: 'completed' },
@@ -91,6 +124,19 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
     { id: 'settings', label: 'Payment Methods' },
   ] as const;
 
+  const resetDepositModal = () => {
+    setShowDepositModal(false);
+    setDepositAmount('');
+    setSelectedDepositMethod(null);
+  };
+
+  const resetWithdrawModal = () => {
+    setShowWithdrawModal(false);
+    setWithdrawAmount('');
+    setSelectedWithdrawMethod(null);
+    setWithdrawSubmitted(false);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-start sm:items-center justify-center overflow-y-auto z-[9999] p-2 sm:p-4">
       <div className="bg-gradient-to-br from-[#1a1d29] to-[#151821] rounded-2xl w-full max-w-5xl border border-green-500/20 shadow-2xl shadow-green-500/10 my-2 sm:my-0 flex flex-col max-h-[95vh] sm:max-h-[90vh]">
@@ -112,7 +158,6 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
 
           {/* Balance Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Available Balance */}
             <div className="bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-3 sm:p-4 md:p-5">
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <p className="text-white/70 text-xs sm:text-sm font-medium">Available Balance</p>
@@ -126,7 +171,6 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
               </p>
             </div>
 
-            {/* Pending */}
             <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-3 sm:p-4 md:p-5">
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <p className="text-white/70 text-xs sm:text-sm font-medium">Pending</p>
@@ -140,7 +184,6 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
               </p>
             </div>
 
-            {/* Net Profit */}
             <div className={`bg-gradient-to-br ${netProfit >= 0 ? 'from-cyan-500/10 to-blue-500/10 border-cyan-500/20' : 'from-red-500/10 to-pink-500/10 border-red-500/20'} border rounded-xl p-3 sm:p-4 md:p-5`}>
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <p className="text-white/70 text-xs sm:text-sm font-medium">Net Profit</p>
@@ -179,10 +222,9 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
         {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
 
-          {/* ── Overview ── */}
+          {/* Overview */}
           {activeTab === 'overview' && (
             <div className="space-y-5 sm:space-y-6">
-              {/* Quick Actions */}
               <div>
                 <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4 flex items-center gap-2">
                   <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
@@ -214,14 +256,13 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
                       </div>
                       <div>
                         <p className="text-white font-bold text-sm sm:text-lg mb-0.5 sm:mb-1">Withdraw</p>
-                        <p className="text-white/60 text-xs sm:text-sm">Transfer to your bank</p>
+                        <p className="text-white/60 text-xs sm:text-sm">Transfer to your account</p>
                       </div>
                     </div>
                   </button>
                 </div>
               </div>
 
-              {/* Stats */}
               <div>
                 <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4">Tournament Statistics</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -245,7 +286,6 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
                 </div>
               </div>
 
-              {/* Recent Activity */}
               <div>
                 <h3 className="text-white text-base sm:text-lg font-bold mb-3 sm:mb-4">Recent Activity</h3>
                 <div className="space-y-2">
@@ -280,7 +320,7 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
             </div>
           )}
 
-          {/* ── Transactions ── */}
+          {/* Transactions */}
           {activeTab === 'transactions' && (
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between flex-wrap gap-2">
@@ -295,7 +335,6 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
                   </select>
                 </div>
               </div>
-
               <div className="space-y-2">
                 {transactions.map(tx => (
                   <div key={tx.id} className="bg-white/5 border border-white/10 rounded-xl p-3 sm:p-4 hover:bg-white/10 transition-colors">
@@ -328,7 +367,7 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
             </div>
           )}
 
-          {/* ── Payment Methods ── */}
+          {/* Payment Methods */}
           {activeTab === 'settings' && (
             <div className="space-y-5 sm:space-y-6">
               <div>
@@ -404,7 +443,7 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
             <div className="p-4 sm:p-5 md:p-6 border-b border-white/5">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-base sm:text-xl md:text-2xl font-bold text-white">Deposit Funds</h3>
-                <button onClick={() => setShowDepositModal(false)} className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
+                <button onClick={resetDepositModal} className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
                   <X className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
                 </button>
               </div>
@@ -412,6 +451,33 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
             </div>
 
             <div className="p-4 sm:p-5 md:p-6 space-y-4">
+              {/* Payment Method Selection */}
+              <div>
+                <label className="block text-white text-xs sm:text-sm font-medium mb-2">Select Payment Method</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYMENT_METHODS.map(method => (
+                    <button
+                      key={method.id}
+                      onClick={() => setSelectedDepositMethod(method.id)}
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                        selectedDepositMethod === method.id
+                          ? 'border-green-500/60 bg-green-500/10 shadow-lg shadow-green-500/10'
+                          : 'border-white/10 bg-white/5 hover:border-white/30'
+                      }`}
+                    >
+                      <div className={`p-2 rounded-lg bg-gradient-to-br ${method.color} text-white`}>
+                        {method.icon}
+                      </div>
+                      <span className="text-white text-xs font-semibold">{method.label}</span>
+                      <span className="text-white/40 text-[10px] text-center leading-tight">{method.desc}</span>
+                      {selectedDepositMethod === method.id && (
+                        <CheckCircle className="w-3.5 h-3.5 text-green-400" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-white text-xs sm:text-sm font-medium mb-2">Amount (EUR)</label>
                 <div className="relative">
@@ -447,14 +513,13 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
 
               <button
                 onClick={() => {
-                  alert(`Deposit of €${depositAmount} initiated!\n\nYou would be redirected to payment gateway.`);
-                  setShowDepositModal(false);
-                  setDepositAmount('');
+                  alert(`Deposit of €${depositAmount} via ${PAYMENT_METHODS.find(m => m.id === selectedDepositMethod)?.label} initiated!\n\nYou would be redirected to payment gateway.`);
+                  resetDepositModal();
                 }}
-                disabled={!depositAmount || parseFloat(depositAmount) <= 0}
+                disabled={!depositAmount || parseFloat(depositAmount) <= 0 || !selectedDepositMethod}
                 className="w-full px-6 py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg hover:shadow-lg hover:shadow-green-500/30 transition-all font-bold text-sm sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Continue to Payment
+                {selectedDepositMethod ? `Continue with ${PAYMENT_METHODS.find(m => m.id === selectedDepositMethod)?.label}` : 'Select a Method to Continue'}
               </button>
             </div>
           </div>
@@ -468,59 +533,114 @@ export function Wallet({ isOpen, onClose, username, balance: externalBalance, on
             <div className="p-4 sm:p-5 md:p-6 border-b border-white/5">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-base sm:text-xl md:text-2xl font-bold text-white">Withdraw Funds</h3>
-                <button onClick={() => setShowWithdrawModal(false)} className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
+                <button onClick={resetWithdrawModal} className="p-1.5 sm:p-2 hover:bg-white/5 rounded-lg transition-colors">
                   <X className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
                 </button>
               </div>
-              <p className="text-white/60 text-xs sm:text-sm">Transfer to your bank account</p>
+              <p className="text-white/60 text-xs sm:text-sm">Transfer to your account</p>
             </div>
 
             <div className="p-4 sm:p-5 md:p-6 space-y-4">
-              <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4">
-                <p className="text-white/60 text-xs sm:text-sm mb-1">Available Balance</p>
-                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">€{balance.toFixed(2)}</p>
-              </div>
-
-              <div>
-                <label className="block text-white text-xs sm:text-sm font-medium mb-2">Amount (EUR)</label>
-                <div className="relative">
-                  <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-blue-400 font-bold text-lg sm:text-xl">€</span>
-                  <input
-                    type="number"
-                    value={withdrawAmount}
-                    onChange={e => setWithdrawAmount(e.target.value)}
-                    placeholder="0.00"
-                    max={balance}
-                    className="w-full bg-[#0a0e1a]/50 border border-white/10 rounded-lg pl-8 sm:pl-10 pr-4 py-3 sm:py-4 text-white text-xl sm:text-2xl font-bold placeholder:text-white/40 focus:outline-none focus:border-blue-400/50"
-                  />
+              {withdrawSubmitted ? (
+                /* Success / Pending Admin Approval State */
+                <div className="text-center py-6 space-y-4">
+                  <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto">
+                    <Clock className="w-8 h-8 text-yellow-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-bold text-lg mb-1">Withdrawal Request Submitted</p>
+                    <p className="text-white/60 text-sm">
+                      Your withdrawal of <span className="text-white font-semibold">€{withdrawAmount}</span> via{' '}
+                      <span className="text-white font-semibold">{PAYMENT_METHODS.find(m => m.id === selectedWithdrawMethod)?.label}</span> is pending admin approval.
+                    </p>
+                  </div>
+                  <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                    <p className="text-yellow-400 text-xs flex items-center justify-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      An administrator must approve this withdrawal before funds are released.
+                    </p>
+                  </div>
+                  <button
+                    onClick={resetWithdrawModal}
+                    className="w-full px-6 py-3 bg-white/10 hover:bg-white/15 text-white rounded-lg transition-all font-semibold text-sm"
+                  >
+                    Close
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div className="bg-white/5 border border-white/10 rounded-lg p-3 sm:p-4">
+                    <p className="text-white/60 text-xs sm:text-sm mb-1">Available Balance</p>
+                    <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white">€{balance.toFixed(2)}</p>
+                  </div>
 
-              <button
-                onClick={() => setWithdrawAmount(balance.toString())}
-                className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm font-medium transition-colors"
-              >
-                Withdraw All
-              </button>
+                  {/* Payment Method Selection */}
+                  <div>
+                    <label className="block text-white text-xs sm:text-sm font-medium mb-2">Withdraw To</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {PAYMENT_METHODS.map(method => (
+                        <button
+                          key={method.id}
+                          onClick={() => setSelectedWithdrawMethod(method.id)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all ${
+                            selectedWithdrawMethod === method.id
+                              ? 'border-blue-500/60 bg-blue-500/10 shadow-lg shadow-blue-500/10'
+                              : 'border-white/10 bg-white/5 hover:border-white/30'
+                          }`}
+                        >
+                          <div className={`p-2 rounded-lg bg-gradient-to-br ${method.color} text-white`}>
+                            {method.icon}
+                          </div>
+                          <span className="text-white text-xs font-semibold">{method.label}</span>
+                          <span className="text-white/40 text-[10px] text-center leading-tight">{method.desc}</span>
+                          {selectedWithdrawMethod === method.id && (
+                            <CheckCircle className="w-3.5 h-3.5 text-blue-400" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-2.5 sm:p-3">
-                <p className="text-yellow-400 text-xs flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
-                  Withdrawals take 1–3 business days to process
-                </p>
-              </div>
+                  <div>
+                    <label className="block text-white text-xs sm:text-sm font-medium mb-2">Amount (EUR)</label>
+                    <div className="relative">
+                      <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-blue-400 font-bold text-lg sm:text-xl">€</span>
+                      <input
+                        type="number"
+                        value={withdrawAmount}
+                        onChange={e => setWithdrawAmount(e.target.value)}
+                        placeholder="0.00"
+                        max={balance}
+                        className="w-full bg-[#0a0e1a]/50 border border-white/10 rounded-lg pl-8 sm:pl-10 pr-4 py-3 sm:py-4 text-white text-xl sm:text-2xl font-bold placeholder:text-white/40 focus:outline-none focus:border-blue-400/50"
+                      />
+                    </div>
+                  </div>
 
-              <button
-                onClick={() => {
-                  alert(`Withdrawal of €${withdrawAmount} initiated!\n\nFunds will arrive in 1-3 business days.`);
-                  setShowWithdrawModal(false);
-                  setWithdrawAmount('');
-                }}
-                disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > balance}
-                className="w-full px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all font-bold text-sm sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Withdraw to Bank
-              </button>
+                  <button
+                    onClick={() => setWithdrawAmount(balance.toString())}
+                    className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm font-medium transition-colors"
+                  >
+                    Withdraw All
+                  </button>
+
+                  <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-2.5 sm:p-3">
+                    <p className="text-yellow-400 text-xs flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                      Withdrawals require admin approval before processing
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setWithdrawSubmitted(true);
+                    }}
+                    disabled={!withdrawAmount || parseFloat(withdrawAmount) <= 0 || parseFloat(withdrawAmount) > balance || !selectedWithdrawMethod}
+                    className="w-full px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all font-bold text-sm sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {selectedWithdrawMethod ? `Request Withdrawal via ${PAYMENT_METHODS.find(m => m.id === selectedWithdrawMethod)?.label}` : 'Select a Method to Continue'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

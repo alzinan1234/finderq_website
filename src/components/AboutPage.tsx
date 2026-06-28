@@ -63,15 +63,8 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
             {t('heroDescription')}
           </p>
           <div data-gsap="hero-item">
-            <button
-              onClick={onGetStarted}
-              className="group px-6 sm:px-10 py-3 sm:py-4 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white rounded-xl hover:from-[#0066ff] hover:to-[#00d4ff] transition-all shadow-xl hover:shadow-[#00d4ff]/40 hover:scale-105 duration-300 text-sm sm:text-base font-bold"
-            >
-              <span className="flex items-center gap-2">
-                Get Started Now <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-              </span>
-            </button>
-            <p className="text-white/40 text-xs sm:text-sm mt-3">Free to join · No credit card required</p>
+          
+            {/* <p className="text-white/40 text-xs sm:text-sm mt-3">Free to join · No credit card required</p> */}
           </div>
         </div>
 
@@ -194,7 +187,7 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
       </div>
 
       {/* ── Issue #9: Riot Games Disclaimer (pink line section) ── */}
-      <div className="relative bg-[#0a0e27] px-4 sm:px-6 pb-10 sm:pb-16">
+      <div className="relative bg-[#0a0e27] px-4 sm:px-6   ">
         <div className="max-w-4xl mx-auto">
           {/* Pink divider line */}
           <div className="w-full h-px mb-6 sm:mb-8" style={{ background: 'linear-gradient(90deg, transparent, #ff69b4, transparent)' }} />

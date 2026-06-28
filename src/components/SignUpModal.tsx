@@ -318,7 +318,7 @@ export function SignUpModal({
                 <div className="mt-2 flex items-start gap-3 bg-[#00d4ff]/10 border border-[#00d4ff]/30 rounded-xl p-3">
                   <Globe className="w-5 h-5 text-[#00d4ff] flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-[#00d4ff] text-sm font-semibold">
+                    <p className="text-[#00d4ff] text-[10px] font-semibold">
                       PLEASE SELECT THE LANGUAGE YOU SPEAK MOST FLUENTLY
                     </p>
                     <p className="text-white/50 text-xs mt-0.5">

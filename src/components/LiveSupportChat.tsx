@@ -144,7 +144,7 @@ export function LiveSupportChat({
                 objectFit: 'contain',
                 objectPosition: 'center bottom',
                 display: 'block',
-                filter: 'drop-shadow(0 4px 12px rgba(0,212,255,0.35))',
+                
                 transition: 'transform 0.2s ease',
               }}
               onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}

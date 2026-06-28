@@ -30,15 +30,11 @@ const PATH_TO_LABEL: Record<string, string> = {
   '/lan-las': 'LAN/LAS', '/oce': 'OCE', '/tr': 'TR', '/jp': 'JP', '/me-sea': 'ME/SEA',
 }
 
-// ── Riot disclaimer text — duplicated inside the marquee track for a seamless loop ──
 const DISCLAIMER_TEXT =
   'This website is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and League of Legends are trademarks or registered trademarks of Riot Games, Inc.'
 
-// ── Issue #8: logo asset paths (replace these strings with the real paths) ──
-// "Post an Ad" button logo  →  /assets/YOUR_POST_AD_LOGO.png
-// "Connect Riot Account"    →  /assets/Riot_Games_logo_icon.webp
-const POST_AD_LOGO   = '/assets/YOUR_POST_AD_LOGO.png'          // ← replace
-const RIOT_LOGO      = '/assets/Riot_Games_logo_icon.webp'      // ← replace
+const POST_AD_LOGO   = '/assets/YOUR_POST_AD_LOGO.png'
+const RIOT_LOGO      = '/assets/Riot_Games_logo_icon.webp'
 
 export function NavBar() {
   const router = useRouter()
@@ -58,7 +54,7 @@ export function NavBar() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  // ── Issue #17: hide navbar on scroll down, show on scroll up ──
+  // ── Scroll hide/show ──
   const [navVisible, setNavVisible] = useState(true)
   const lastScrollY = useRef(0)
 
@@ -66,13 +62,10 @@ export function NavBar() {
     const handleScroll = () => {
       const currentY = window.scrollY
       if (currentY < 60) {
-        // Always show near the top
         setNavVisible(true)
       } else if (currentY > lastScrollY.current) {
-        // Scrolling down → hide
         setNavVisible(false)
       } else {
-        // Scrolling up → show
         setNavVisible(true)
       }
       lastScrollY.current = currentY
@@ -89,28 +82,29 @@ export function NavBar() {
   const line2Ref        = useRef(null)
   const line3Ref        = useRef(null)
 
-  // ── GSAP: Riot disclaimer — infinite left-to-right marquee ──
+  // ── GSAP: Riot disclaimer marquee ──
   useEffect(() => {
     if (!disclaimerRef.current) return
     const tween = gsap.fromTo(
       disclaimerRef.current,
       { xPercent: -50 },
-      { xPercent: 0, duration: 30, ease: 'none', repeat: -1 } // duration = scroll speed; lower = faster
+      { xPercent: 0, duration: 30, ease: 'none', repeat: -1 }
     )
     return () => { tween.kill() }
   }, [])
 
-  // Navbar entrance
+  // ── GSAP: Navbar entrance — opacity only, do NOT animate y/transform
+  //    so it never fights the scroll-hide inline transform ──
   useEffect(() => {
     if (navRef.current) {
       gsap.fromTo(navRef.current,
-        { y: -40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out', delay: 0.1 }
+        { opacity: 0 },
+        { opacity: 1, duration: 0.5, ease: 'power3.out', delay: 0.1 }
       )
     }
   }, [])
 
-  // Hamburger morph
+  // ── GSAP: Hamburger morph ──
   useEffect(() => {
     if (!line1Ref.current || !line2Ref.current || !line3Ref.current) return
     if (isMobileMenuOpen) {
@@ -124,7 +118,7 @@ export function NavBar() {
     }
   }, [isMobileMenuOpen])
 
-  // Drawer open animation
+  // ── GSAP: Drawer open ──
   useEffect(() => {
     if (isMobileMenuOpen && mobileMenuRef.current) {
       gsap.fromTo(mobileMenuRef.current,
@@ -147,7 +141,7 @@ export function NavBar() {
   }
   const toggleMobileMenu = () => isMobileMenuOpen ? closeMobileMenu() : openMobileMenu()
 
-  // Auto-close on resize
+  // Auto-close drawer on resize to desktop
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 768 && isMobileMenuOpen) closeMobileMenu()
@@ -156,7 +150,7 @@ export function NavBar() {
     return () => window.removeEventListener('resize', handleResize)
   }, [isMobileMenuOpen])
 
-  // Outside click for mobile drawer
+  // Outside click — close mobile drawer
   useEffect(() => {
     function handleClickOutside(e) {
       if (
@@ -169,7 +163,7 @@ export function NavBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isMobileMenuOpen])
 
-  // ── Issue #20: close region dropdown on outside click ──
+  // Outside click — close region dropdown
   const regionRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!isRegionDropdownOpen) return
@@ -184,24 +178,25 @@ export function NavBar() {
 
   return (
     <>
-      {/* ── Issue #9: Riot Games disclaimer bar (pink line) — GSAP infinite left-to-right marquee ── */}
+      {/* Disclaimer bar (commented out — uncomment if needed) */}
       {/* <div
         className="fixed top-0 left-0 right-0 z-[60] overflow-hidden text-[10px] sm:text-xs text-white/50 bg-[#0a0e27]/90 backdrop-blur-sm border-b border-pink-500/30 py-3 leading-tight"
         style={{ borderBottomColor: '#ff69b4' }}
-      > */}
-        {/* <div ref={disclaimerRef} className="flex whitespace-nowrap will-change-transform">
+      >
+        <div ref={disclaimerRef} className="flex whitespace-nowrap will-change-transform">
           <span className="flex-shrink-0 pr-16">{DISCLAIMER_TEXT}</span>
           <span className="flex-shrink-0 pr-16">{DISCLAIMER_TEXT}</span>
-        </div> */}
-      {/* </div> */}
+        </div>
+      </div> */}
 
       <nav
         id="main-navbar"
         ref={navRef}
-        className="fixed left-0 right-0 flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 py-1 sm:py-2 z-50 transition-transform duration-300"
+        className="fixed left-0 right-0 flex items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 py-1 z-50"
         style={{
-          top: '28px', // offset below disclaimer bar
+          top: 0,
           transform: navVisible ? 'translateY(0)' : 'translateY(-110%)',
+          transition: 'transform 0.3s ease',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -226,8 +221,7 @@ export function NavBar() {
             </motion.div>
           </Link>
 
-          {/* ── Issue #20: Region Dropdown with outside-click-close ── */}
-          {/* Nudged down a bit (responsive) so it doesn't sit too close to the disclaimer bar */}
+          {/* Region Dropdown */}
           <div className="relative mt-1 sm:mt-1.5 md:mt-2 lg:mt-2.5" ref={regionRef}>
             <button
               className="group relative flex items-center gap-0.5 pl-0.5 pr-1.5 py-0.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 overflow-visible"
@@ -337,7 +331,7 @@ export function NavBar() {
             <span className="text-white font-semibold text-sm">Challenges</span>
           </Link>
 
-          {/* ── Issue #9: Missing tabs (Terms + FAQ) — desktop only ── */}
+          {/* Terms — desktop (uncomment to enable) */}
           {/* <Link
             href="/terms"
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/30 cursor-pointer"
@@ -346,6 +340,7 @@ export function NavBar() {
             <span className="text-white/80 font-semibold text-sm">Terms</span>
           </Link> */}
 
+          {/* FAQ — desktop (uncomment to enable) */}
           {/* <Link
             href="/faq"
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/30 cursor-pointer"
@@ -354,7 +349,7 @@ export function NavBar() {
             <span className="text-white/80 font-semibold text-sm">FAQ</span>
           </Link> */}
 
-          {/* ── Issue #8: Post an Ad button with replaced logo ── */}
+          {/* Post an Ad (uncomment to enable) */}
           {/* {isLoggedIn && (
             <button
               onClick={() => set({ isPostAdOpen: true } as any)}
@@ -505,7 +500,7 @@ export function NavBar() {
                       <span className="text-green-400 group-hover:text-green-300 text-xs sm:text-sm font-semibold" style={{ marginLeft: -32, marginTop: -6 }}>{t('wallet')}</span>
                     </button>
 
-                    {/* ── Issue #8: Connect Riot Account with Riot logo ── */}
+                    {/* Connect Riot Account (uncomment to enable) */}
                     {/* <button
                       onClick={() => { set({ isRiotSyncOpen: true, isProfileDropdownOpen: false } as any) }}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-white/5 transition-colors text-left group"
@@ -626,7 +621,7 @@ export function NavBar() {
                 <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 group-hover:text-yellow-400 transition-colors flex-shrink-0" />
               </Link>
 
-              {/* ── Issue #9: Terms & FAQ in mobile drawer too ── */}
+              {/* Terms */}
               <Link href="/terms" onClick={closeMobileMenu} className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/15 transition-all duration-200">
                 <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
                   <FileText className="w-5 h-5 text-white/50" />
@@ -638,6 +633,7 @@ export function NavBar() {
                 <ChevronDown className="w-4 h-4 text-white/30 -rotate-90 flex-shrink-0" />
               </Link>
 
+              {/* FAQ */}
               <Link href="/faq" onClick={closeMobileMenu} className="group flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/8 active:bg-white/15 transition-all duration-200">
                 <div className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 flex-shrink-0">
                   <HelpCircle className="w-5 h-5 text-white/50" />

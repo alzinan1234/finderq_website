@@ -338,21 +338,21 @@ export function NavBar() {
           </Link>
 
           {/* ── Issue #9: Missing tabs (Terms + FAQ) — desktop only ── */}
-          <Link
+          {/* <Link
             href="/terms"
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/30 cursor-pointer"
           >
             <FileText className="w-4 h-4 text-white/60" />
             <span className="text-white/80 font-semibold text-sm">Terms</span>
-          </Link>
+          </Link> */}
 
-          <Link
+          {/* <Link
             href="/faq"
             className="hidden md:flex items-center gap-1.5 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/30 cursor-pointer"
           >
             <HelpCircle className="w-4 h-4 text-white/60" />
             <span className="text-white/80 font-semibold text-sm">FAQ</span>
-          </Link>
+          </Link> */}
 
           {/* ── Issue #8: Post an Ad button with replaced logo ── */}
           {/* {isLoggedIn && (
@@ -506,7 +506,7 @@ export function NavBar() {
                     </button>
 
                     {/* ── Issue #8: Connect Riot Account with Riot logo ── */}
-                    <button
+                    {/* <button
                       onClick={() => { set({ isRiotSyncOpen: true, isProfileDropdownOpen: false } as any) }}
                       className="w-full px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-3 hover:bg-white/5 transition-colors text-left group"
                     >
@@ -517,7 +517,7 @@ export function NavBar() {
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
                       />
                       <span className="text-white/80 group-hover:text-white text-xs sm:text-sm">Connect Riot Account</span>
-                    </button>
+                    </button> */}
 
                     {isOwner && (
                       <>

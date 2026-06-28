@@ -10,8 +10,8 @@ const finderQLogo     = '/assets/999999-Photoroom.png'
 
 // ── Issue #8: logo paths ──────────────────────────────────────────────────────
 // Replace these two strings with the real asset paths in your project
-const POST_AD_LOGO  = '/assets/YOUR_POST_AD_LOGO.png'       // ← replace with your "post an ad" logo
-const RIOT_LOGO     = '/assets/Riot_Games_logo_icon.webp'   // ← downloaded from mediafire link in issue #8
+const POST_AD_LOGO  = '/assets/2xko-teemo-removebg-preview.png'
+const RIOT_LOGO     = '/assets/Riot_Games_logo_icon.webp'
 
 interface AboutPageProps {
   onGetStarted: () => void
@@ -98,7 +98,7 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
               <div className="absolute inset-0 bg-[#00d4ff]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#00d4ff] to-[#00b8e6] rounded-xl flex items-center justify-center shadow-lg shadow-[#00d4ff]/30 flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#263c41] to-[#00b8e6] rounded-xl flex items-center justify-center shadow-lg shadow-[#00d4ff]/30 flex-shrink-0 overflow-hidden">
                     <img
                       src={POST_AD_LOGO}
                       alt="Post an Ad"
@@ -141,7 +141,7 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
               <div className="absolute inset-0 bg-[#c89b3c]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#d0393b] rounded-xl flex items-center justify-center shadow-lg shadow-[#d0393b]/40 flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#6b4142] rounded-xl flex items-center justify-center shadow-lg shadow-[#d0393b]/40 flex-shrink-0 overflow-hidden">
                     <img
                       src={RIOT_LOGO}
                       alt="Riot Games"

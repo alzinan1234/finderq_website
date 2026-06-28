@@ -35,7 +35,6 @@ import { useTranslation } from '@/hooks/useTranslation'
 import { translations, LanguageCode } from '@/utils/translations'
 import { toast } from 'sonner'
 
-// ─── Google Translate Provider ───────────────────────────────────────────────
 const googleLangMap: Record<string, string> = {
   'en': 'en', 'ro': 'ro', 'pl': 'pl', 'tr': 'tr', 'fr': 'fr',
   'de': 'de', 'es': 'es', 'it': 'it', 'pt': 'pt', 'pt-br': 'pt',
@@ -48,7 +47,6 @@ const googleLangMap: Record<string, string> = {
 
 function GoogleTranslateProvider({ language }: { language: string }) {
   useEffect(() => {
-    // Inject hide styles once
     if (!document.getElementById('gt-hide-style')) {
       const style = document.createElement('style')
       style.id = 'gt-hide-style'
@@ -63,16 +61,12 @@ function GoogleTranslateProvider({ language }: { language: string }) {
       `
       document.head.appendChild(style)
     }
-
-    // Hidden container for widget
     if (!document.getElementById('google-translate-container')) {
       const div = document.createElement('div')
       div.id = 'google-translate-container'
       div.style.cssText = 'position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none;'
       document.body.appendChild(div)
     }
-
-    // Init callback
     ;(window as any).googleTranslateElementInit = () => {
       try {
         new (window as any).google.translate.TranslateElement(
@@ -81,8 +75,6 @@ function GoogleTranslateProvider({ language }: { language: string }) {
         )
       } catch {}
     }
-
-    // Load script once
     if (!document.getElementById('google-translate-script')) {
       const script = document.createElement('script')
       script.id = 'google-translate-script'
@@ -95,20 +87,16 @@ function GoogleTranslateProvider({ language }: { language: string }) {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const googleLang = googleLangMap[language] || language
-
     const applyLang = (attempts = 0) => {
       if (language === 'en') {
-        // Reset to English via cookie
         document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; domain=${window.location.hostname}`
         document.cookie = `googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`
         const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement
         if (combo) { combo.value = 'en'; combo.dispatchEvent(new Event('change')) }
         return
       }
-      // Set cookie for persistence
       document.cookie = `googtrans=/en/${googleLang}; path=/; domain=${window.location.hostname}`
       document.cookie = `googtrans=/en/${googleLang}; path=/`
-
       const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement
       if (combo) {
         combo.value = googleLang
@@ -117,7 +105,6 @@ function GoogleTranslateProvider({ language }: { language: string }) {
         setTimeout(() => applyLang(attempts + 1), 400)
       }
     }
-
     const t = setTimeout(() => applyLang(), 300)
     return () => clearTimeout(t)
   }, [language])
@@ -125,7 +112,6 @@ function GoogleTranslateProvider({ language }: { language: string }) {
   return null
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
 function makeT(lang: string) {
   return (key: string): string => {
     const l = lang as LanguageCode
@@ -159,7 +145,6 @@ function RiotSyncWrapper({ onClose }: { onClose: () => void }) {
   )
 }
 
-// ─── Main SiteShell ──────────────────────────────────────────────────────────
 export function SiteShell({ children }: { children: React.ReactNode }) {
   const store = useAppStore()
   const { language } = useTranslation()
@@ -197,7 +182,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
     setUserStatus, setSelectedLanguage, logout,
   } = store
 
-  // Cooldown timer
   useEffect(() => {
     const interval = setInterval(() => {
       if (!hasPremium && store.lastPostTime > 0) {
@@ -209,7 +193,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }, [hasPremium, store.lastPostTime, set])
 
   const handleRegister = (username: string, email: string, password: string, region: string) => {
-    // Save account language at registration time
     if (typeof window !== 'undefined' && signUpLanguage) {
       localStorage.setItem(`finderq_account_language_${username}`, signUpLanguage)
     }
@@ -224,12 +207,10 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
       isLoggedIn: true, userName: username, userEmail: email,
       userRegion: region, userJoinDate: newUser.joinDate,
       isSignUpOpen: false, isVerificationOpen: false,
-      // Apply chosen language immediately after registration
       selectedLanguage: signUpLanguage || selectedLanguage,
       userLanguage: signUpLanguage || selectedLanguage,
       userAccountLanguage: signUpLanguage || selectedLanguage,
     })
-    // Apply Google Translate for new user's language
     if (signUpLanguage && signUpLanguage !== 'en' && typeof window !== 'undefined') {
       localStorage.setItem('finderq_language', signUpLanguage)
     }
@@ -237,14 +218,29 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0e27] text-white">
-      {/* ── Google Translate: full-site translation ── */}
+    <div className="min-h-screen bg-[#0a0e27] text-white flex flex-col">
       <GoogleTranslateProvider language={selectedLanguage} />
 
       <NavBar />
-      <main className="">{children}</main>
+      <main className="flex-1">{children}</main>
 
-      {/* Notification Panel */}
+      {/* ── Footer ── */}
+      <footer className="w-full flex flex-col items-center gap-2 py-4 px-4 bg-[#0a0e27] border-t border-white/5 mt-auto">
+       
+        <div className="w-48 h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }} />
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <button onClick={() => set({ isPrivacyPolicyOpen: true })} className="text-white/30 hover:text-white/60 text-xs transition-colors">Privacy Policy</button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button onClick={() => set({ isTermsOpen: true })} className="text-white/30 hover:text-white/60 text-xs transition-colors">Terms of Service</button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button onClick={() => set({ isAboutModalOpen: true })} className="text-white/30 hover:text-white/60 text-xs transition-colors">About</button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button onClick={() => set({ isContactModalOpen: true })} className="text-white/30 hover:text-white/60 text-xs transition-colors">Contact</button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <span className="text-white/20 text-xs">© 2026 FinderQ</span>
+        </div>
+      </footer>
+
       {isLoggedIn && (
         <NotificationPanel
           isOpen={isNotificationPanelOpen}
@@ -256,7 +252,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Messages */}
       {isLoggedIn && (
         <MessagesPanel
           friends={friends}
@@ -267,7 +262,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* Support Chat */}
       <LiveSupportChat
         isLoggedIn={isLoggedIn} userName={userName}
         isAdmin={isAdmin} isOwner={isOwner}
@@ -289,7 +283,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         onLoginClick={() => set({ isLoginOpen: true })}
       />
 
-      {/* ── Auth Modals ── */}
       {isSignUpOpen && (
         <SignUpModal
           isOpen={isSignUpOpen} onClose={() => set({ isSignUpOpen: false })} t={t}
@@ -336,7 +329,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
           setIsLoggedIn={(v) => set({ isLoggedIn: v })}
           setUserName={(username) => {
             setUserName(username)
-            // #6 FIX: restore saved language for this account on login
             if (typeof window !== 'undefined') {
               const savedLang = localStorage.getItem(`finderq_account_language_${username}`)
               if (savedLang && savedLang !== 'en') {
@@ -416,7 +408,6 @@ export function SiteShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* ── Profile ── */}
       {isProfileOpen && (
         <ProfileModal
           isOpen={isProfileOpen} onClose={() => set({ isProfileOpen: false })}

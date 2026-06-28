@@ -147,10 +147,10 @@ export function MainLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-[#0a0e27] text-white" onClick={() => set({ isRegionDropdownOpen: false, isProfileDropdownOpen: false } as any)}>
+    <div className="min-h-screen bg-[#0a0e27] text-white flex flex-col" onClick={() => set({ isRegionDropdownOpen: false, isProfileDropdownOpen: false } as any)}>
       <NavBar />
 
-      <main className="">
+      <main className="flex-1">
         {currentPage === 'about' && (
           <AboutPage onGetStarted={() => set({ isSignUpOpen: true })} language={selectedLanguage} />
         )}
@@ -562,6 +562,57 @@ export function MainLayout() {
       {isContactModalOpen && <ContactModal isOpen={isContactModalOpen} onClose={() => set({ isContactModalOpen: false })} />}
 
       <LanguageSelector selectedLanguage={selectedLanguage} onLanguageChange={setSelectedLanguage} />
+
+      {/* ── Legal Footer ── */}
+      <footer className="w-full flex flex-col items-center gap-2 py-4 px-4 bg-[#0a0e27] border-t border-white/5 mt-auto">
+
+        {/* Riot Games disclaimer */}
+        <p className="text-center text-white/20 text-[10px] leading-relaxed max-w-2xl px-2">
+          This website is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or
+          anyone officially involved in producing or managing Riot Games properties. Riot Games and League of Legends
+          are trademarks or registered trademarks of Riot Games, Inc.
+        </p>
+
+        {/* Subtle divider */}
+        <div
+          className="w-48 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent)' }}
+        />
+
+        {/* Nav links row */}
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+          <button
+            onClick={() => set({ isPrivacyPolicyOpen: true })}
+            className="text-white/30 hover:text-white/60 text-xs transition-colors"
+          >
+            Privacy Policy
+          </button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button
+            onClick={() => set({ isTermsOpen: true })}
+            className="text-white/30 hover:text-white/60 text-xs transition-colors"
+          >
+            Terms of Service
+          </button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button
+            onClick={() => set({ isAboutModalOpen: true })}
+            className="text-white/30 hover:text-white/60 text-xs transition-colors"
+          >
+            About
+          </button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <button
+            onClick={() => set({ isContactModalOpen: true })}
+            className="text-white/30 hover:text-white/60 text-xs transition-colors"
+          >
+            Contact
+          </button>
+          <span className="text-white/10 text-xs select-none">•</span>
+          <span className="text-white/20 text-xs">© 2026 FinderQ</span>
+        </div>
+
+      </footer>
     </div>
   )
 }

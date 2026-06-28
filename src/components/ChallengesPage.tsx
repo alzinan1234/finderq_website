@@ -199,7 +199,7 @@ export function ChallengesPage({ isLoggedIn, userName, userAvatar, riotVerified,
     <>
       {/* Ad Modal */}
       {adModal && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-start sm:items-center justify-center overflow-y-auto z-[9999] p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-start sm:items-center justify-center overflow-y-auto z-[9999] p-3 sm:p-4 ">
           <div className="bg-[#1a1d29] rounded-2xl max-w-md w-full border border-white/10 shadow-2xl overflow-hidden my-4 sm:my-0">
             <div className="h-1 w-full bg-gradient-to-r from-[#c89b3c] to-[#00d4ff]" />
             <div className="p-4 sm:p-6">
@@ -260,7 +260,7 @@ export function ChallengesPage({ isLoggedIn, userName, userAvatar, riotVerified,
       )}
 
       <div
-        className="min-h-screen pt-16 sm:pt-20 pb-20 sm:pb-24 px-3 sm:px-4 lg:px-6 relative"
+        className="min-h-screen pt-16 sm:pt-50 pb-20 sm:pb-24 px-3 sm:px-4 lg:px-6 relative"
         style={{ backgroundImage: `url(${challengesBg})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }}
       >
         <div className="absolute inset-0 bg-[#0a0e27]/75 pointer-events-none" />

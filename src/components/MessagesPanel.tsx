@@ -264,7 +264,11 @@ export function MessagesPanel({
       )}
 
       {/* ── Open Chat Threads ── */}
-      <div className="fixed bottom-0 left-0 right-0 sm:left-0 sm:right-auto z-40 pointer-events-none px-4 sm:pl-72 flex flex-col-reverse sm:flex-row items-end gap-3 pb-12 sm:pb-0">
+      {/* FIX: sm:pl-72 (288px) was less than the friends panel's actual right edge
+          (left offset 16-24px + 288px width = 304-312px), causing the chat window
+          to overlap the friends panel. Bumped to a fixed 336px so it always clears
+          the panel with a clean gap, at every breakpoint from sm upward. */}
+      <div className="fixed bottom-0 left-0 right-0 sm:left-0 sm:right-auto z-40 pointer-events-none px-4 sm:pl-[336px] flex flex-col-reverse sm:flex-row items-end gap-3 pb-12 sm:pb-0">
         {openThreads.map((thread, index) => (
           <div key={thread.username} className="pointer-events-auto w-full sm:w-[320px] flex-shrink-0" style={{ order: index }}>
             <ChatThread
@@ -856,8 +860,11 @@ function ChatThread({ thread, onClose, onSendMessage, onDeleteMessage, onAddReac
             )}
 
             {/* #15 — Emoji Picker */}
+            {/* FIX: was left-0 (popped up on top of/inside the chat window). The input
+                bar wrapper below spans the full width of the chat window, so left-full
+                anchors the picker just outside the window's right edge instead. */}
             {showEmojiPicker && (
-              <div ref={emojiRef} className="absolute bottom-14 left-0 z-50 shadow-2xl rounded-2xl overflow-hidden border border-white/10">
+              <div ref={emojiRef} className="absolute bottom-14 left-full ml-2 z-50 shadow-2xl rounded-2xl overflow-hidden border border-white/10">
                 <EmojiPicker
                   onEmojiClick={data => { setMessage(prev => prev + data.emoji); inputRef.current?.focus(); }}
                   theme="dark"

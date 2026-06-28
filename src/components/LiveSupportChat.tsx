@@ -2,7 +2,7 @@
 'use client'
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { MessageCircle, X, Send, Minimize2, Maximize2 } from "lucide-react";
+import { X, Send, Minimize2, Maximize2 } from "lucide-react";
 
 interface Message {
   id: number;
@@ -36,12 +36,10 @@ export function LiveSupportChat({
   const [mounted, setMounted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Ensure portal target (document.body) only used after client mount (avoids SSR mismatch)
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Get current user's messages
   const currentMessages = conversations[userName] || [
     {
       id: 1,
@@ -74,7 +72,6 @@ export function LiveSupportChat({
     onSendMessage(userName, newMessage);
     setInputMessage("");
 
-    // Auto-reply simulation for demo (în producție ar fi backend real)
     if (!isAdmin && !isOwner) {
       setTimeout(() => {
         const autoReply = {
@@ -85,7 +82,6 @@ export function LiveSupportChat({
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
         onSendMessage(userName, autoReply);
-        
         if (!isOpen) {
           setHasUnreadMessages(true);
         }
@@ -106,7 +102,6 @@ export function LiveSupportChat({
     setIsMinimized(false);
   };
 
-  // Check for new messages when not open
   useEffect(() => {
     if (!isOpen && currentMessages.length > 1) {
       const lastMessage = currentMessages[currentMessages.length - 1];
@@ -122,34 +117,63 @@ export function LiveSupportChat({
       {!isOpen && (
         <button
           onClick={handleOpenChat}
-          className="  shadow-2xl rounded-full flex items-center justify-center transition-all group relative hover:scale-110 animate-pulse overflow-hidden"
           title="Open Support Chat"
-          style={{ 
+          style={{
             position: 'fixed',
-            bottom: '24px',
-            right: '24px',
+            bottom: '8px',
+            right: '8px',
             zIndex: 999999,
-           
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'flex-end',
+            // overflow visible so mushroom cap shows fully
+            overflow: 'visible',
           }}
         >
-          <img src="/assets/support-chat-logo.png" alt="Support Chat" className="w-40 h-40 object-cover" />
-          {hasUnreadMessages && (
-            <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#0055cc] rounded-full flex items-center justify-center animate-pulse">
-              <span className="text-white text-xs font-bold">!</span>
-            </div>
-          )}
-          
-          {/* Pulse ring effect */}
-        
-          
-          {/* Glow ring */}
-         
+          <div style={{ position: 'relative', display: 'inline-flex' }}>
+            <img
+              src="/assets/support-chat-logo.png"
+              alt="Support Chat"
+              style={{
+                width: '129px',
+                height: '129px',
+                objectFit: 'contain',
+                objectPosition: 'center bottom',
+                display: 'block',
+                filter: 'drop-shadow(0 4px 12px rgba(0,212,255,0.35))',
+                transition: 'transform 0.2s ease',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.08)')}
+              onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+            />
+            {hasUnreadMessages && (
+              <div style={{
+                position: 'absolute',
+                top: '6px',
+                right: '6px',
+                width: '18px',
+                height: '18px',
+                background: '#0055cc',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                animation: 'pulse 1.5s infinite',
+              }}>
+                <span style={{ color: '#fff', fontSize: '10px', fontWeight: 700 }}>!</span>
+              </div>
+            )}
+          </div>
         </button>
       )}
-          
+
       {/* Chat Window */}
       {isOpen && (
-        <div 
+        <div
           className={`${isMinimized ? 'w-80 h-16' : 'w-96 h-[600px]'} bg-[#1a1d29] rounded-2xl shadow-2xl flex flex-col border border-[#00d4ff]/30 transition-all duration-300`}
           style={{
             position: 'fixed',
@@ -257,26 +281,18 @@ export function LiveSupportChat({
       )}
 
       <style>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(0, 212, 255, 0.3);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(0, 212, 255, 0.5);
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.5); }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
       `}</style>
     </>
   );
 
-  // Render via portal directly into document.body so no parent's transform/overflow/filter
-  // can turn `position: fixed` into ancestor-relative positioning. This is what keeps the
-  // button truly pinned to the viewport's bottom-right corner regardless of scroll.
   if (!mounted) return null;
   return createPortal(content, document.body);
 }

@@ -510,7 +510,7 @@ export function MessagesPanel({
         {/* Bottom Bar */}
         <div className="relative px-3 py-2.5 flex items-center justify-between cursor-pointer select-none rounded-t-xl overflow-hidden">
           <img src={teemoBannerBottom} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 " />
           <div className="relative flex items-center gap-2 z-10">
             <div className="relative">
               <MessageCircle className="w-4 h-4 text-white" />
@@ -520,7 +520,7 @@ export function MessagesPanel({
                 </span>
               )}
             </div>
-            <h3 className="text-white text-sm font-semibold drop-shadow">Messages</h3>
+            <h3 className="text-white text-sm font-semibold ">Messages</h3>
             {totalUnread > 0 && (
               <span className="px-1.5 py-0.5 bg-[#00d4ff]/20 text-[#00d4ff] text-[10px] font-bold rounded-full border border-[#00d4ff]/30">
                 {totalUnread} new
@@ -633,7 +633,7 @@ function ChatThread({ thread, onClose, onSendMessage, onDeleteMessage, onAddReac
               </button>
             </div>
             <div className="p-4">
-              <img src={imagePreview} alt="preview" className="w-full max-h-60 object-contain rounded-xl bg-black/30" />
+              <img src={imagePreview} alt="preview" className="w-full max-h-60 object-contain rounded-xl " />
             </div>
             <div className="p-3 border-t border-white/10 flex gap-2">
               <button onClick={() => setImagePreview(null)} className="flex-1 py-2 bg-white/5 hover:bg-white/10 text-white/60 rounded-xl text-sm border border-white/10 transition-colors">Cancel</button>

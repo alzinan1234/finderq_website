@@ -42,6 +42,21 @@ interface EmailVerificationModalProps {
   setIsProfileOpen: (v: boolean) => void;
 }
 
+// Guard: if a parent ever passes a non-function (undefined, wrong prop name,
+// state value swapped with its setter, etc.) this prevents a hard crash and
+// instead logs exactly which prop is broken, so it's easy to trace upstream.
+function safeCall(fn: unknown, ...args: any[]) {
+  if (typeof fn === 'function') {
+    (fn as (...a: any[]) => void)(...args);
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[EmailVerificationModal] Expected a function prop but received "${typeof fn}". Check the parent component is passing the setter correctly.`,
+      fn
+    );
+  }
+}
+
 export function EmailVerificationModal({
   isOpen,
   onClose,
@@ -76,20 +91,20 @@ export function EmailVerificationModal({
 
     if (enteredCode === verificationCode) {
       if (pendingUserData) {
-        setUserName(pendingUserData.username);
-        setUserEmail(pendingUserData.email);
-        setUserRegion(pendingUserData.region);
+        safeCall(setUserName, pendingUserData.username);
+        safeCall(setUserEmail, pendingUserData.email);
+        safeCall(setUserRegion, pendingUserData.region);
         if (pendingUserData.language) {
-          setUserLanguage(pendingUserData.language);
-          setSelectedLanguage(pendingUserData.language);
+          safeCall(setUserLanguage, pendingUserData.language);
+          safeCall(setSelectedLanguage, pendingUserData.language);
           localStorage.setItem('finderq_language', pendingUserData.language);
           if (pendingUserData.isSignUp) {
-            setUserAccountLanguage(pendingUserData.language);
+            safeCall(setUserAccountLanguage, pendingUserData.language);
             localStorage.setItem('finderq_account_language', pendingUserData.language);
           }
         }
         if (pendingUserData.joinDate) {
-          setUserJoinDate(pendingUserData.joinDate);
+          safeCall(setUserJoinDate, pendingUserData.joinDate);
         }
         if (rememberMe) {
           localStorage.setItem('finderq_remember_me', 'true');
@@ -97,22 +112,22 @@ export function EmailVerificationModal({
           localStorage.setItem('finderq_saved_email', pendingUserData.email);
           localStorage.setItem('finderq_saved_region', pendingUserData.region);
         }
-        setIsLoggedIn(true);
-        setIsVerificationOpen(false);
+        safeCall(setIsLoggedIn, true);
+        safeCall(setIsVerificationOpen, false);
 
         if (pendingUserData.isOwner) {
-          setIsOwner(true);
-          setIsAdmin(false);
-          setIsModerator(false);
+          safeCall(setIsOwner, true);
+          safeCall(setIsAdmin, false);
+          safeCall(setIsModerator, false);
         } else if (pendingUserData.isAdmin) {
-          setIsAdmin(true);
-          setIsOwner(false);
-          setIsModerator(false);
+          safeCall(setIsAdmin, true);
+          safeCall(setIsOwner, false);
+          safeCall(setIsModerator, false);
         } else {
           const foundMod = ownerUsers.find((u: any) => u.username.toLowerCase() === pendingUserData.username.toLowerCase() && u.role === 'moderator');
-          setIsModerator(!!foundMod);
-          setIsAdmin(false);
-          setIsOwner(false);
+          safeCall(setIsModerator, !!foundMod);
+          safeCall(setIsAdmin, false);
+          safeCall(setIsOwner, false);
         }
 
         if (pendingUserData.isSignUp) {
@@ -121,7 +136,7 @@ export function EmailVerificationModal({
             taken.push(pendingUserData.username);
             localStorage.setItem('finderq_registered_usernames', JSON.stringify(taken));
           }
-          setIsProfileOpen(true);
+          safeCall(setIsProfileOpen, true);
           toast.success('Account created successfully!', {
             description: `Welcome to FinderQ, ${pendingUserData.username}! 🎮`,
             duration: 3000,
@@ -133,22 +148,22 @@ export function EmailVerificationModal({
           });
         }
 
-        setEnteredCode('');
-        setPendingUserData(null);
+        safeCall(setEnteredCode, '');
+        safeCall(setPendingUserData, null);
       }
     } else {
       toast.error('Invalid code!', {
         description: 'Please check your email and try again.',
         duration: 3000,
       });
-      setEnteredCode('');
+      safeCall(setEnteredCode, '');
     }
   };
 
   const handleResend = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setVerificationCode(code);
-    setEnteredCode('');
+    safeCall(setVerificationCode, code);
+    safeCall(setEnteredCode, '');
     toast.success('Code resent!', {
       description: `New code: ${code}`,
       duration: 10000,
@@ -187,7 +202,7 @@ export function EmailVerificationModal({
               value={enteredCode ?? ''}
               onChange={(e) => {
                 const value = e.target.value.replace(/[^0-9]/g, '');
-                setEnteredCode(value);
+                safeCall(setEnteredCode, value);
               }}
               onKeyPress={(e) => { if (e.key === 'Enter' && (enteredCode ?? '').length === 6) handleVerify(); }}
               autoFocus

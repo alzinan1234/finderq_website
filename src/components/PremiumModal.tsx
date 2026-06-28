@@ -89,6 +89,15 @@ export function PremiumModal({
 
   if (!isOpen) return null;
 
+  // FIX: these props can arrive as undefined for a render or two (e.g. before
+  // localStorage/profile data has loaded in the parent), which crashed
+  // .startsWith() / .replace() below. Fall back to safe defaults so the modal
+  // never throws — it just shows the same "default" look until the real
+  // value lands.
+  const safeProfileBackground = userProfileBackground ?? '';
+  const safePostBackground = userPostBackground ?? '';
+  const safePostBorder = postBorder ?? 'default';
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -283,8 +292,8 @@ export function PremiumModal({
                   <div className="mb-3 sm:mb-4">
                     <p className="text-white/50 text-xs mb-2">Current:</p>
                     <div
-                      className={`p-6 sm:p-8 rounded-lg border border-white/10 ${!userProfileBackground.startsWith('CUSTOM:') ? `bg-gradient-to-br ${userProfileBackground}` : ''}`}
-                      style={userProfileBackground.startsWith('CUSTOM:') ? { background: userProfileBackground.replace('CUSTOM:', '') } : undefined}
+                      className={`p-6 sm:p-8 rounded-lg border border-white/10 ${!safeProfileBackground.startsWith('CUSTOM:') ? `bg-gradient-to-br ${safeProfileBackground}` : ''}`}
+                      style={safeProfileBackground.startsWith('CUSTOM:') ? { background: safeProfileBackground.replace('CUSTOM:', '') } : undefined}
                     >
                       <div className="flex items-center justify-center">
                         <p className="text-white/80 text-xs font-medium">Preview</p>
@@ -317,10 +326,10 @@ export function PremiumModal({
                   <div className="flex items-center gap-3 p-3 sm:p-4 bg-white/5 rounded-lg border border-white/10">
                     <div
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex-shrink-0 bg-[#0a0e27]"
-                      style={borderStyle(postBorder)}
+                      style={borderStyle(safePostBorder)}
                     />
                     <p className="text-white font-semibold text-xs sm:text-sm capitalize">
-                      {postBorder === 'none' ? 'No Border' : postBorder.replace('-', ' ')}
+                      {safePostBorder === 'none' ? 'No Border' : safePostBorder.replace('-', ' ')}
                     </p>
                   </div>
                 </div>
@@ -354,8 +363,8 @@ export function PremiumModal({
                   <div>
                     <p className="text-white/50 text-xs mb-2">Current style:</p>
                     <div
-                      className={`p-8 sm:p-12 rounded-lg border border-white/10 mb-3 sm:mb-4 ${!userPostBackground.startsWith('CUSTOM:') ? `bg-gradient-to-br ${userPostBackground}` : ''}`}
-                      style={userPostBackground.startsWith('CUSTOM:') ? { background: userPostBackground.replace('CUSTOM:', '') } : undefined}
+                      className={`p-8 sm:p-12 rounded-lg border border-white/10 mb-3 sm:mb-4 ${!safePostBackground.startsWith('CUSTOM:') ? `bg-gradient-to-br ${safePostBackground}` : ''}`}
+                      style={safePostBackground.startsWith('CUSTOM:') ? { background: safePostBackground.replace('CUSTOM:', '') } : undefined}
                     >
                       <div className="flex items-center justify-center">
                         <p className="text-white/80 text-xs font-medium">Post Preview</p>
@@ -492,7 +501,7 @@ export function PremiumModal({
       <BorderPickerModal
         isOpen={isBorderPickerOpen}
         onClose={() => setIsBorderPickerOpen(false)}
-        currentBorder={postBorder}
+        currentBorder={safePostBorder}
         onSave={(border) => {
           setPostBorder(border);
           toast.success('Post border saved!');

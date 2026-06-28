@@ -243,27 +243,6 @@ export function SignUpModal({
         </button>
 
         <div className="relative z-10 p-6 sm:p-8">
-          {/* Issue #7: Language notice banner */}
-          {showLangPrompt && (
-            <div className="mb-5 flex items-start gap-3 bg-[#00d4ff]/10 border border-[#00d4ff]/30 rounded-xl p-3">
-              <Globe className="w-5 h-5 text-[#00d4ff] flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[#00d4ff] text-sm font-semibold">
-                  PLEASE SELECT THE LANGUAGE YOU SPEAK MOST FLUENTLY
-                </p>
-                <p className="text-white/50 text-xs mt-0.5">
-                  Language selection is required to create your account.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowLangPrompt(false)}
-                className="text-white/30 hover:text-white/60 ml-auto flex-shrink-0"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
           {/* Header */}
           <div className="mb-6">
             <h2 className="text-white text-2xl sm:text-3xl font-bold mb-1">
@@ -333,6 +312,27 @@ export function SignUpModal({
                   </option>
                 ))}
               </select>
+
+              {/* Issue #7: Language notice banner — moved here, right under the dropdown */}
+              {showLangPrompt && (
+                <div className="mt-2 flex items-start gap-3 bg-[#00d4ff]/10 border border-[#00d4ff]/30 rounded-xl p-3">
+                  <Globe className="w-5 h-5 text-[#00d4ff] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[#00d4ff] text-sm font-semibold">
+                      PLEASE SELECT THE LANGUAGE YOU SPEAK MOST FLUENTLY
+                    </p>
+                    <p className="text-white/50 text-xs mt-0.5">
+                      Language selection is required to create your account.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowLangPrompt(false)}
+                    className="text-white/30 hover:text-white/60 ml-auto flex-shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Password */}
@@ -446,16 +446,29 @@ export function SignUpModal({
             </div>
 
             {/* Submit Button - Issue #5: basic button instead of image */}
+            {/* FIX: the PNG asset has a lot of transparent canvas above/below the
+                visible logo, which pushed the OR divider far below it with a big
+                visible gap. Pulled it tight with negative top/bottom margins
+                (inline style wins over the parent's space-y-4 spacing) so the
+                logo sits right above "OR". Nudge marginTop/marginBottom below
+                if it needs to be tighter or looser for the actual asset. */}
             <button
-              type="button"
               onClick={handleSubmit}
-              className="w-full py-3 bg-gradient-to-r from-[#00d4ff] to-[#0066ff] text-white font-bold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-[#00d4ff]/20 text-sm sm:text-base mt-2"
+              className="relative bg-transparent border-0 p-0"
+              style={{ marginLeft: '13%', width: '75%', marginTop: '-48px', marginBottom: '-126px' }}
             >
-              {t("createAccount") || "Create Account"}
+              <img src="/assets/ChatGPT_Image_Jun_6__2026__09_56_39_PM.png" alt="" className="w-full  object-contain pointer-events-none" />
+              <div
+                className="absolute inset-0 w-2/5 h-2/5 mx-auto my-auto cursor-pointer hover:scale-105 transition-all"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }}
+              />
             </button>
 
             {/* Divider */}
-            <div className="relative">
+            <div className="relative ">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-white/10" />
               </div>

@@ -8,8 +8,6 @@ import { translations, LanguageCode } from '@/utils/translations'
 const backgroundImage = '/assets/aY1Un5.jpg'
 const finderQLogo     = '/assets/999999-Photoroom.png'
 
-// ── Issue #8: logo paths ──────────────────────────────────────────────────────
-// Replace these two strings with the real asset paths in your project
 const POST_AD_LOGO  = '/assets/2xko-teemo-removebg-preview.png'
 const RIOT_LOGO     = '/assets/Riot_Games_logo_icon.webp'
 
@@ -53,7 +51,7 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
 
         <div className="relative z-10 text-center px-4 sm:px-6 max-w-5xl mx-auto pt-20 sm:pt-24">
           <div data-gsap="hero-item" className="flex justify-center mb-4 sm:mb-8">
-            <img src={finderQLogo} alt="FinderQ Logo" className="h-32 sm:h-48 md:h-64 lg:h-80 w-auto object-contain" />
+            <img src={finderQLogo} alt="FinderQ Logo" className="h-32 sm:h-48 md:h-64 lg:h-90 w-auto object-contain" />
           </div>
           <div data-gsap="hero-item" className="mb-4 sm:mb-8">
             <h1 className="text-white text-xl sm:text-2xl md:text-3xl lg:text-4xl mb-3 font-bold leading-tight">{t('heroTitle')}</h1>
@@ -62,10 +60,6 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
           <p data-gsap="hero-item" className="text-white/70 text-sm sm:text-base md:text-lg max-w-3xl mx-auto leading-relaxed mb-8 sm:mb-12 px-2">
             {t('heroDescription')}
           </p>
-          <div data-gsap="hero-item">
-          
-            {/* <p className="text-white/40 text-xs sm:text-sm mt-3">Free to join · No credit card required</p> */}
-          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 h-20 sm:h-32 bg-gradient-to-t from-[#0a0e27] to-transparent" />
@@ -73,11 +67,6 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
 
       {/* How It Works */}
       <div className="relative py-12 sm:py-20 px-4 sm:px-6 bg-[#0a0e27]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-[#00d4ff]/10 rounded-full blur-[80px] sm:blur-[120px]" />
-          <div className="absolute bottom-0 right-1/3 w-64 sm:w-96 h-64 sm:h-96 bg-[#c89b3c]/10 rounded-full blur-[80px] sm:blur-[120px]" />
-        </div>
-
         <div className="relative z-10 max-w-6xl mx-auto">
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3">HOW IT WORKS?</h2>
@@ -86,34 +75,29 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
 
-            {/* ── Issue #8: Post an Ad card — replaced logo ── */}
+            {/* Post an Ad card */}
             <div className="group relative bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-2xl p-5 sm:p-8 border border-[#00d4ff]/20 hover:border-[#00d4ff]/60 transition-all duration-300">
-              <div className="absolute inset-0 bg-[#00d4ff]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-[#263c41] to-[#00b8e6] rounded-xl flex items-center justify-center shadow-lg shadow-[#00d4ff]/30 flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-transparent flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <img
                       src={POST_AD_LOGO}
                       alt="Post an Ad"
-                      className="w-full h-full object-contain p-1"
-                      onError={e => {
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                      }}
+                      className="w-full h-full object-contain"
+                      onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex'; }}
                     />
-                    {/* Fallback icon if logo fails to load */}
                     <span style={{ display: 'none' }} className="w-full h-full items-center justify-center">
-                      <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                      <MessageCircle className="w-10 h-10 text-[#00d4ff]" />
                     </span>
                   </div>
                   <h3 className="text-white text-xl sm:text-2xl font-bold">Post an Ad</h3>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
                   {[
-                    { n: 1, title: 'Select Your Region',      desc: 'Choose EUW, EUNE, NA, KR, or BR from the region selector' },
+                    { n: 1, title: 'Select Your Region', desc: 'Choose EUW, EUNE, NA, KR, or BR from the region selector' },
                     { n: 2, title: 'Click "Create New Post"', desc: 'Fill in your rank, preferred roles, and game modes' },
-                    { n: 3, title: 'Write Your Message',      desc: "Describe what you're looking for and publish your ad" },
-                    { n: 4, title: 'Connect with Players',    desc: 'Receive messages and start playing together!' },
+                    { n: 3, title: 'Write Your Message', desc: "Describe what you're looking for and publish your ad" },
+                    { n: 4, title: 'Connect with Players', desc: 'Receive messages and start playing together!' },
                   ].map(s => (
                     <div key={s.n} className="flex items-start gap-3">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#00d4ff]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -129,34 +113,29 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
               </div>
             </div>
 
-            {/* ── Issue #8: Connect Riot Account card — Riot Games logo ── */}
+            {/* Connect Riot Account card */}
             <div className="group relative bg-gradient-to-br from-[#1a1d29] to-[#0a0e27] rounded-2xl p-5 sm:p-8 border border-[#c89b3c]/20 hover:border-[#c89b3c]/60 transition-all duration-300">
-              <div className="absolute inset-0 bg-[#c89b3c]/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl" />
               <div className="relative z-10">
                 <div className="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#6b4142] rounded-xl flex items-center justify-center shadow-lg shadow-[#d0393b]/40 flex-shrink-0 overflow-hidden">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-transparent flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <img
                       src={RIOT_LOGO}
                       alt="Riot Games"
-                      className="w-full h-full object-contain p-1.5"
-                      onError={e => {
-                        e.currentTarget.style.display = 'none';
-                        (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                      }}
+                      className="w-15 h-full object-contain"
+                      onError={e => { e.currentTarget.style.display = 'none'; (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex'; }}
                     />
-                    {/* Fallback icon */}
                     <span style={{ display: 'none' }} className="w-full h-full items-center justify-center">
-                      <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                      <Shield className="w-10 h-10 text-[#c89b3c]" />
                     </span>
                   </div>
                   <h3 className="text-white text-xl sm:text-2xl font-bold">Connect Riot Account</h3>
                 </div>
                 <div className="space-y-3 sm:space-y-4">
                   {[
-                    { n: 1, title: 'Open Your Profile',           desc: 'Click on your avatar in the top-right corner' },
-                    { n: 2, title: 'Click "Link Riot Account"',   desc: 'Enter your Riot ID and tagline (e.g., Username#EUW)' },
-                    { n: 3, title: 'Get Verified',                desc: 'Your rank, champions, and stats will be synced automatically' },
-                    { n: 4, title: 'Unlock Riot Verified Badge',  desc: "Show others you're a verified player with exclusive features" },
+                    { n: 1, title: 'Open Your Profile', desc: 'Click on your avatar in the top-right corner' },
+                    { n: 2, title: 'Click "Link Riot Account"', desc: 'Enter your Riot ID and tagline (e.g., Username#EUW)' },
+                    { n: 3, title: 'Get Verified', desc: 'Your rank, champions, and stats will be synced automatically' },
+                    { n: 4, title: 'Unlock Riot Verified Badge', desc: "Show others you're a verified player with exclusive features" },
                   ].map(s => (
                     <div key={s.n} className="flex items-start gap-3">
                       <div className="w-7 h-7 sm:w-8 sm:h-8 bg-[#c89b3c]/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -186,23 +165,17 @@ export function AboutPage({ onGetStarted, language = 'en' }: AboutPageProps) {
         </div>
       </div>
 
-      {/* ── Issue #9: Riot Games Disclaimer (pink line section) ── */}
-      <div className="relative bg-[#0a0e27] px-4 sm:px-6   ">
+      <div className="relative bg-[#0a0e27] px-4 sm:px-6">
         <div className="max-w-4xl mx-auto">
-          {/* Pink divider line */}
           <div className="w-full h-px mb-6 sm:mb-8" style={{ background: 'linear-gradient(90deg, transparent, #ff69b4, transparent)' }} />
-
           <div className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 rounded-xl border border-pink-500/15 bg-pink-500/5">
             <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-pink-400/60 flex-shrink-0 mt-0.5" />
             <p className="text-white/35 text-[11px] sm:text-xs leading-relaxed">
-              This website is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or
-              anyone officially involved in producing or managing Riot Games properties. Riot Games and League of
-              Legends are trademarks or registered trademarks of Riot Games, Inc.
+              This website is not endorsed by Riot Games and does not reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games and League of Legends are trademarks or registered trademarks of Riot Games, Inc.
             </p>
           </div>
         </div>
       </div>
-
       <div className="h-10 sm:h-16 bg-[#0a0e27]" />
     </div>
   )

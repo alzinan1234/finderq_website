@@ -232,7 +232,8 @@ export function NavBar() {
                 alt="Region"
                 className="w-7 h-7 sm:w-12 sm:h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain -my-1 sm:-my-4 md:-my-5 lg:-my-7 -mr-0.5 sm:-mr-1 lg:-mr-2"
               />
-              <span className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg">{currentRegionLabel}</span>
+              {/* notranslate so Google Translate never rewrites region codes like NA/EUW */}
+              <span className="text-white font-bold text-xs sm:text-sm md:text-base lg:text-lg notranslate" translate="no">{currentRegionLabel}</span>
               <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-[#00d4ff] transition-transform duration-300 ${isRegionDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
 
@@ -243,7 +244,8 @@ export function NavBar() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 mt-2 bg-gradient-to-b from-[#1a1d29]/95 to-[#0a0e27]/95 backdrop-blur-xl rounded-xl shadow-2xl py-3 min-w-[140px] sm:min-w-[160px] max-w-[80vw] border border-[#00d4ff]/20 overflow-hidden"
+                  className="notranslate absolute top-full left-0 mt-2 bg-gradient-to-b from-[#1a1d29]/95 to-[#0a0e27]/95 backdrop-blur-xl rounded-xl shadow-2xl py-3 min-w-[140px] sm:min-w-[160px] max-w-[80vw] border border-[#00d4ff]/20 overflow-hidden"
+                  translate="no"
                 >
                   <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/10 via-transparent to-[#c89b3c]/10 pointer-events-none" />
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#00d4ff]/50 to-transparent" />
@@ -255,7 +257,7 @@ export function NavBar() {
                       className="relative block w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/20 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-200" />
-                      <span className="relative font-semibold text-sm sm:text-base">{r.label}</span>
+                      <span className="relative font-semibold text-sm sm:text-base notranslate" translate="no">{r.label}</span>
                     </Link>
                   ))}
 
@@ -268,7 +270,7 @@ export function NavBar() {
                       className="relative block w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-white/80 hover:text-white transition-all duration-200 group/item"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-[#00d4ff]/20 to-transparent opacity-0 group-hover/item:opacity-100 transition-opacity duration-200" />
-                      <span className="relative font-semibold text-sm sm:text-base">{r.label}</span>
+                      <span className="relative font-semibold text-sm sm:text-base notranslate" translate="no">{r.label}</span>
                     </Link>
                   ))}
 

@@ -89,13 +89,16 @@ export function LanguageSelector({ currentLanguage, onLanguageChange, selectedLa
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-3 py-1.5 bg-white/5 backdrop-blur-md rounded-xl hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-[#00d4ff]/40 cursor-pointer group"
       >
-        {/* Flag updates instantly from store */}
-        <span className="text-white font-semibold text-sm">{selectedLangObj.flag}</span>
+        {/* Flag updates instantly from store — notranslate so Google Translate never touches it */}
+        <span className="text-white font-semibold text-sm notranslate" translate="no">{selectedLangObj.flag}</span>
         <ChevronDown className={`w-4 h-4 text-[#00d4ff] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-64 max-h-96 overflow-y-auto bg-[#0a0e27]/90 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl z-[70]">
+        <div
+          className="notranslate absolute top-full right-0 mt-2 w-64 max-h-96 overflow-y-auto bg-[#0a0e27]/90 backdrop-blur-xl rounded-xl border border-white/10 shadow-2xl z-[70]"
+          translate="no"
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-[#00d4ff]/5 to-transparent pointer-events-none rounded-xl" />
           <div className="py-2">
             {languages.map((lang) => (
@@ -109,8 +112,8 @@ export function LanguageSelector({ currentLanguage, onLanguageChange, selectedLa
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{lang.flag}</span>
-                  <span className="font-semibold text-sm">{lang.name}</span>
+                  <span className="text-xl notranslate" translate="no">{lang.flag}</span>
+                  <span className="font-semibold text-sm notranslate" translate="no">{lang.name}</span>
                   {lang.code === activeLang && (
                     <div className="ml-auto w-2 h-2 rounded-full bg-[#00d4ff]" />
                   )}
